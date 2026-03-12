@@ -24,10 +24,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50`}>
+        <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center font-bold text-white dark:text-black">B</div>
+            <h1 className="text-xl font-bold tracking-tight">Barbershop</h1>
+          </div>
+          <nav className="hidden md:flex items-center gap-6">
+            <a href="#" className="text-sm font-medium hover:text-zinc-500 transition-colors">Services</a>
+            <a href="#" className="text-sm font-medium hover:text-zinc-500 transition-colors">Staff</a>
+            <a href="#" className="text-sm font-medium hover:text-zinc-500 transition-colors">Contact</a>
+          </nav>
+          <button className="bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">Book Now</button>
+        </header>
+        <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto p-6 md:p-8">
+          {children}
+        </main>
+        <footer className="py-8 text-center text-sm text-zinc-500 border-t border-zinc-200 dark:border-zinc-800">
+          <p>© {new Date().getFullYear()} Barbershop SaaS. All rights reserved.</p>
+        </footer>
       </body>
     </html>
   );

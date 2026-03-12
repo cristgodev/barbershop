@@ -1,65 +1,57 @@
-import Image from "next/image";
+import { prisma } from "./lib/prisma"
+import ClientDirectory from "./book/ClientDirectory"
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+export default async function Home() {
+  const shops = await prisma.barbershop.findMany({
+    orderBy: { createdAt: 'desc' }
+  })
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex flex-col gap-16 pb-12 w-full max-w-6xl mx-auto px-4 mt-8">
+      {/* Hero Section (SaaS Platform) */}
+      <section className="bg-zinc-950 text-white dark:bg-zinc-900 rounded-[2.5rem] p-8 md:p-16 flex flex-col md:flex-row items-center gap-12 justify-between overflow-hidden relative shadow-2xl">
+        <div className="absolute inset-0 opacity-20 pointer-events-none" 
+             style={{ background: 'radial-gradient(circle at right center, white 0%, transparent 80%)' }} />
+        
+        <div className="max-w-2xl space-y-8 relative z-10 w-full">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-sm font-medium border border-white/20">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            The #1 Barbershop Platform
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]">
+            Find your next great haircut.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg md:text-xl text-zinc-400 leading-relaxed max-w-xl">
+            Book appointments instantly with top-rated barbers. Or, register your own barbershop and start managing your business like a pro.
           </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
+            <a href="/register" className="bg-white hover:bg-zinc-200 text-black px-8 py-4 rounded-xl font-semibold text-lg transition-transform hover:scale-105 active:scale-95 shadow-lg w-full sm:w-auto text-center">
+              Register Barbershop
+            </a>
+            <a href="/login" className="bg-transparent hover:bg-white/10 text-white border border-white/30 px-8 py-4 rounded-xl font-semibold text-lg transition-colors w-full sm:w-auto text-center">
+              Login to Dashboard
+            </a>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="w-full md:w-5/12 hidden md:flex items-center justify-center relative z-10">
+            <svg width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="opacity-10 text-white rotate-12 drop-shadow-2xl">
+                <circle cx="6" cy="6" r="3" />
+                <path d="M8.12 8.12 12 12" />
+                <path d="M20 4 8.12 15.88" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M14.8 14.8 20 20" />
+            </svg>
         </div>
-      </main>
+      </section>
+
+      {/* Directory Section */}
+      <section className="space-y-6 pt-8">
+        <ClientDirectory initialShops={shops} />
+      </section>
+      
     </div>
   );
 }

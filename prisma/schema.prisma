@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  passwordHash  String?
+  phone         String?
+  role          String    @default("CUSTOMER")
+  
+  // Profile Customization
+  bio           String?
+  avatarUrl     String?
+  portfolioUrls String?   // Comma-separated list of image URLs
+
+  // Relations
+  barbershopId  String?
+  barbershop    Barbershop? @relation("StaffToShop", fields: [barbershopId], references: [id])
+  
+  appointmentsAsCustomer Appointment[] @relation("CustomerAppointments")
+  appointmentsAsBarber   Appointment[] @relation("BarberAppointments")
+
+  schedules     Schedule[]
+  timeOffs      TimeOff[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Barbershop {
+  id          String   @id @default(cuid())
+  slug        String?  @unique @default(uuid())
+  name        String
+  address     String?
+  phone       String?
+  
+  // Customization
+  heroImageUrl  String?
+  galleryUrls   String?   // Comma-separated list of image URLs
+  
+  // Relations
+  staff       User[]   @relation("StaffToShop")
+  services    Service[]
+  appointments Appointment[]
+  timeOffs    ShopTimeOff[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  durationMins Int        // e.g. 30, 45, 60
+
+  // Relations
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Appointment {
+  id           String            @id @default(cuid())
+  date         DateTime
+  startTime    DateTime
+  endTime      DateTime
+  status       String     @default("PENDING")
+
+  // Relations
+  customerId   String
+  customer     User       @relation("CustomerAppointments", fields: [customerId], references: [id])
+  
+  barberId     String
+  barber       User       @relation("BarberAppointments", fields: [barberId], references: [id])
+  
+  serviceId    String
+  service      Service    @relation(fields: [serviceId], references: [id])
+  
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Schedule {
+  id           String     @id @default(cuid())
+  barberId     String
+  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek    Int        // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime    String     // Format HH:mm (e.g., "09:00")
+  endTime      String     // Format HH:mm (e.g., "18:00")
+  isWorkingDay Boolean    @default(true) // If false, the barber does not work on this day
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([barberId, dayOfWeek])
+}
+
+model TimeOff {
+  id           String     @id @default(cuid())
+  barberId     String
+  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  date         DateTime   // Specific date they have taken off
+  reason       String?    // E.g., Vacation, Sick leave, Personal
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([barberId, date])
+}
+
+model ShopTimeOff {
+  id           String     @id @default(cuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  date         DateTime   // Specific date the entire shop is closed
+  reason       String?    // E.g., National holiday, Renovation
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([barbershopId, date])
+}
