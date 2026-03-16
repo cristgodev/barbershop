@@ -35,9 +35,9 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col min-h-screen">
         
         {/* TopBar */}
-        <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-8 sticky top-0 z-30">
+        <header className="h-16 bg-white dark:bg-zinc-900/50 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-8 sticky top-0 z-30">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-zinc-500 font-medium">Dashboard</span>
+            <h2 className="text-xl font-bold font-serif text-zinc-900 dark:text-white" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Dashboard Center</h2>
           </div>
           
           <div className="flex items-center gap-4">

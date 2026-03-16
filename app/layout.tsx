@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
+import { ThemeProvider } from "./providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,6 +11,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -23,19 +31,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50`}>
-        <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center font-bold text-white dark:text-black">B</div>
-            <h1 className="text-xl font-bold tracking-tight">Barbershop</h1>
-          </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#" className="text-sm font-medium hover:text-zinc-500 transition-colors">Services</a>
-            <a href="#" className="text-sm font-medium hover:text-zinc-500 transition-colors">Staff</a>
-            <a href="#" className="text-sm font-medium hover:text-zinc-500 transition-colors">Contact</a>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} antialiased min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 selection:bg-yellow-600/30 selection:text-white`}>
+        <ThemeProvider>
+        <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
+          <a href="/" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 bg-yellow-600 rounded flex items-center justify-center font-bold text-zinc-50 dark:text-zinc-950 group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.2)]">B</div>
+            <h1 className="text-xl font-bold tracking-wide font-serif text-zinc-900 dark:text-white uppercase" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Barbershop</h1>
+          </a>
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#" className="text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-500 transition-colors">Servicios</a>
+            <a href="#" className="text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-500 transition-colors">Staff</a>
+            <a href="#" className="text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-500 transition-colors">Contacto</a>
           </nav>
-          <button className="bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">Book Now</button>
+          <a href="/login" className="bg-yellow-600 hover:bg-yellow-500 text-zinc-50 dark:text-zinc-950 px-6 py-2.5 rounded-full text-sm font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+            Acceso Socios
+          </a>
         </header>
         <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto p-6 md:p-8">
           {children}
@@ -43,6 +54,7 @@ export default function RootLayout({
         <footer className="py-8 text-center text-sm text-zinc-500 border-t border-zinc-200 dark:border-zinc-800">
           <p>© {new Date().getFullYear()} Barbershop SaaS. All rights reserved.</p>
         </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

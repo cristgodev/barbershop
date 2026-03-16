@@ -245,7 +245,7 @@ export default function DashboardClient({
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h3 className="text-xl font-bold">Agenda</h3>
+                <h3 className="text-3xl font-bold font-serif text-zinc-900 dark:text-white" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Agenda Selecta</h3>
 
                 {currentUserRole === 'OWNER' && staffMembers.length > 1 && (
                     <div className="flex items-center gap-3">
@@ -268,7 +268,7 @@ export default function DashboardClient({
                 <style>{`
                     /* General Overrides */
                     .fc { font-family: inherit; }
-                    .fc-toolbar-title { font-weight: 800 !important; font-size: 1.5rem !important; letter-spacing: -0.025em; color: #18181b; }
+                    .fc-toolbar-title { font-weight: 800 !important; font-size: 2rem !important; letter-spacing: -0.025em; color: #18181b; font-family: var(--font-cormorant), serif !important; }
                     
                     /* Links (Fixes invisible months in Year view & day numbers) */
                     .fc a { color: inherit !important; text-decoration: none !important; }
@@ -361,7 +361,7 @@ export default function DashboardClient({
 
                     /* ===== DARK MODE MEDIA QUERY ===== */
                     @media (prefers-color-scheme: dark) {
-                        .fc-toolbar-title { color: #ffffff !important; }
+                        .fc-toolbar-title { color: #ffffff !important; font-family: var(--font-cormorant), serif !important; }
                         
                         .fc-theme-standard th { border-bottom: 1px solid rgba(255,255,255,0.08) !important; background: transparent !important; }
                         .fc-theme-standard td { border: 1px solid rgba(255,255,255,0.04) !important; background: transparent !important; }
@@ -440,7 +440,7 @@ export default function DashboardClient({
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transform transition-all border border-zinc-200 dark:border-zinc-800">
                         <div className="p-6">
-                            <h3 className="text-xl font-bold mb-4">Manage Appointment</h3>
+                            <h3 className="text-2xl font-bold mb-4 font-serif text-zinc-900 dark:text-white" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Gestión de Cita</h3>
                             
                             <div className="space-y-3 mb-6 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800">
                                 <div>
