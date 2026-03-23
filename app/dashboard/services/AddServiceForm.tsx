@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '../../contexts/LanguageContext'
 
 export default function AddServiceForm() {
     const router = useRouter()
+    const { t } = useTranslation()
     
     const [name, setName] = useState('')
     const [price, setPrice] = useState('')
@@ -34,7 +36,7 @@ export default function AddServiceForm() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error || 'Failed to add service')
+                throw new Error(data.error || t('services.error_occurred'))
             }
 
             // Reset form
@@ -61,7 +63,7 @@ export default function AddServiceForm() {
             )}
 
             <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Service Name *</label>
+                <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('services.service_name')}</label>
                 <input
                     type="text"
                     required
@@ -74,7 +76,7 @@ export default function AddServiceForm() {
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Price ($) *</label>
+                    <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('services.price')}</label>
                     <input
                         type="number"
                         step="0.01"
@@ -87,29 +89,29 @@ export default function AddServiceForm() {
                 </div>
                 
                 <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Duration (Mins) *</label>
+                    <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('services.duration')}</label>
                     <select
                         required
                         value={durationMins}
                         onChange={(e) => setDurationMins(e.target.value)}
                         className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow"
                     >
-                        <option value="15">15 mins</option>
-                        <option value="30">30 mins</option>
-                        <option value="45">45 mins</option>
-                        <option value="60">1 hour</option>
-                        <option value="90">1.5 hours</option>
-                        <option value="120">2 hours</option>
+                        <option value="15">{t('services.duration_15')}</option>
+                        <option value="30">{t('services.duration_30')}</option>
+                        <option value="45">{t('services.duration_45')}</option>
+                        <option value="60">{t('services.duration_60')}</option>
+                        <option value="90">{t('services.duration_90')}</option>
+                        <option value="120">{t('services.duration_120')}</option>
                     </select>
                 </div>
             </div>
 
             <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Description (Optional)</label>
+                <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('services.description')}</label>
                 <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Briefly describe what this service includes."
+                    placeholder={t('services.description_placeholder')}
                     rows={2}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow resize-none"
                 />
@@ -120,7 +122,7 @@ export default function AddServiceForm() {
                 disabled={isLoading}
                 className="w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black font-semibold py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 mt-2 shadow-sm"
             >
-                {isLoading ? 'Adding...' : 'Add Service'}
+                {isLoading ? t('services.adding') : t('services.add_service')}
             </button>
         </form>
     )

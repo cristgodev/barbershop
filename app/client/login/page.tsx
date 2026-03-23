@@ -123,7 +123,7 @@ function ClientLoginForm() {
                             </div>
 
                             <div className="mt-6">
-                                <button type="button" onClick={() => alert('Google Auth to be configured in Cloud Console')}
+                                <button type="button" onClick={() => signIn('google', { callbackUrl: returnUrl })}
                                     className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm text-sm font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all active:scale-[0.98]"
                                 >
                                     <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">

@@ -1,0 +1,12 @@
+app/[slug]/ShopClient.tsx(3,80): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/[slug]/ShopClient.tsx(4,32): error TS2307: Cannot find module '../../lib/currency' or its corresponding type declarations.
+app/book/success/[appointmentId]/page.tsx(3,129): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/book/success/[appointmentId]/page.tsx(4,32): error TS2307: Cannot find module '../../../../lib/currency' or its corresponding type declarations.
+app/dashboard/clients/[id]/ClientProfileClient.tsx(3,136): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/clients/ClientsListClient.tsx(5,89): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/inventory/InventoryClient.tsx(4,96): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/pos/PosClient.tsx(5,96): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/services/page.tsx(29,45): error TS2322: Type '{ services: { id: string; name: string; createdAt: Date; updatedAt: Date; barbershopId: string; description: string | null; price: number; durationMins: number; }[]; shopCurrency: string; }' is not assignable to type 'IntrinsicAttributes & { services: any[]; }'.
+  Property 'shopCurrency' does not exist on type 'IntrinsicAttributes & { services: any[]; }'.
+app/dashboard/services/ServicesClient.tsx(31,22): error TS2741: Property 'shopCurrency' is missing in type '{ initialServices: any[]; }' but required in type '{ initialServices: Service[]; shopCurrency: string; }'.
+app/dashboard/services/ServicesList.tsx(4,10): error TS2305: Module '"@prisma/client"' has no exported member 'Service'.

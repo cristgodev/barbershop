@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
+import { sendAppointmentWebhook } from '../../../lib/webhook'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../lib/auth'
 
@@ -36,8 +37,20 @@ export async function POST(req: Request) {
 
         const updated = await prisma.appointment.update({
             where: { id: appointmentId },
-            data: { status: 'COMPLETED' }
+            data: { status: 'COMPLETED' },
+            include: { customer: true }
         })
+
+        // Give +10 loyalty points if the appointment has a registered customer
+        if (updated.customerId) {
+            await prisma.user.update({
+                where: { id: updated.customerId },
+                data: { loyaltyPoints: { increment: 10 } }
+            })
+        }
+
+        // Trigger WhatsApp Webhook for completion
+        sendAppointmentWebhook(updated.id, 'APPOINTMENT_COMPLETED')
 
         return NextResponse.json(updated)
 

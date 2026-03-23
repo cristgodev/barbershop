@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '../contexts/LanguageContext';
 
 type Shop = {
     id: string;
@@ -10,6 +11,7 @@ type Shop = {
 };
 
 export default function ClientDirectory({ initialShops }: { initialShops: Shop[] }) {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredShops = initialShops.filter((shop) =>
@@ -19,14 +21,14 @@ export default function ClientDirectory({ initialShops }: { initialShops: Shop[]
     return (
         <div className="flex flex-col gap-8 pb-12 w-full max-w-4xl mx-auto">
             <div className="text-center md:text-left">
-                <h2 className="text-4xl md:text-5xl font-bold font-serif text-zinc-900 dark:text-white tracking-tight" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Directorio Exclusivo</h2>
-                <p className="text-zinc-500 dark:text-zinc-400 mt-3 text-lg font-medium">Encuentra tu salón de preferencia para reservar una cita.</p>
+                <h2 className="text-4xl md:text-5xl font-bold font-serif text-zinc-900 dark:text-white tracking-tight" style={{ fontFamily: 'var(--font-cormorant), serif' }}>{t('directory.all_shops')}</h2>
+                <p className="text-zinc-500 dark:text-zinc-400 mt-3 text-lg font-medium">{t('landing.hero_desc')}</p>
             </div>
 
             <div className="relative">
                 <input
                     type="text"
-                    placeholder="Buscar barberías premium..."
+                    placeholder={t('directory.search_placeholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-zinc-100/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4 focus:outline-none focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 transition-colors"
@@ -36,10 +38,7 @@ export default function ClientDirectory({ initialShops }: { initialShops: Shop[]
             {filteredShops.length === 0 ? (
                 <div className="bg-zinc-100/30 dark:bg-zinc-900/40 rounded-3xl p-12 text-center border border-zinc-200/50 dark:border-zinc-800/80">
                     <p className="text-zinc-500 dark:text-zinc-400 font-serif italic text-xl">
-                        {initialShops.length === 0
-                            ? "No hay salones disponibles en este momento."
-                            : "No se encontraron salones que coincidan con tu búsqueda."
-                        }
+                        {t('directory.no_results')}
                     </p>
                 </div>
             ) : (
@@ -57,7 +56,7 @@ export default function ClientDirectory({ initialShops }: { initialShops: Shop[]
                                 {shop.address || "No address provided"}
                             </p>
                             <div className="text-yellow-600 dark:text-yellow-500 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all relative z-10">
-                                Reservar Aquí <span aria-hidden="true">&rarr;</span>
+                                {t('directory.book_now')} <span aria-hidden="true">&rarr;</span>
                             </div>
                         </a>
                     ))}

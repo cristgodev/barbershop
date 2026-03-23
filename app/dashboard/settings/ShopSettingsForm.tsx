@@ -2,17 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '../../contexts/LanguageContext'
 
 export default function ShopSettingsForm({ shop }: { shop: any }) {
     const router = useRouter()
+    const { t } = useTranslation()
     
     const [name, setName] = useState(shop.name || '')
     const [description, setDescription] = useState(shop.description || '')
     const [address, setAddress] = useState(shop.address || '')
     const [phone, setPhone] = useState(shop.phone || '')
+    const [currency, setCurrency] = useState(shop.currency || 'USD')
     
     const [heroImageUrl, setHeroImageUrl] = useState(shop.heroImageUrl || '')
     const [galleryUrls, setGalleryUrls] = useState(shop.galleryUrls || '')
+    
+    // Feature Flags
+    const [isCrmEnabled, setIsCrmEnabled] = useState(shop.isCrmEnabled ?? true)
+    const [isPosEnabled, setIsPosEnabled] = useState(shop.isPosEnabled ?? true)
+    const [isGamificationEnabled, setIsGamificationEnabled] = useState(shop.isGamificationEnabled ?? true)
+    const [isMarketingEnabled, setIsMarketingEnabled] = useState(shop.isMarketingEnabled ?? false)
+    const [isLoyaltyEnabled, setIsLoyaltyEnabled] = useState(shop.isLoyaltyEnabled ?? false)
     
     // UI states for actual files
     const [heroFile, setHeroFile] = useState<File | null>(null)
@@ -59,28 +69,37 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                 body: JSON.stringify({
                     name, description, address, phone,
                     heroImageUrl: finalHeroUrl,
-                    galleryUrls: finalGalleryUrls
+                    galleryUrls: finalGalleryUrls,
+                    currency,
+                    isCrmEnabled, isPosEnabled, isGamificationEnabled, isMarketingEnabled, isLoyaltyEnabled
                 })
             })
 
             if (res.ok) {
-                setMessage({ type: 'success', text: 'Shop settings updated successfully!' })
+                setMessage({ type: 'success', text: t('settings.success') })
                 if (heroFile) { setHeroImageUrl(finalHeroUrl); setHeroFile(null); }
                 if (galleryFiles.length > 0) { setGalleryUrls(finalGalleryUrls); setGalleryFiles([]); }
                 router.refresh()
             } else {
                 const data = await res.json()
-                setMessage({ type: 'error', text: data.error || 'Failed to update settings.' })
+                setMessage({ type: 'error', text: data.error || t('settings.error_update') })
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'An unexpected error occurred during upload.' })
+            setMessage({ type: 'error', text: t('settings.error_unexpected') })
         }
 
         setIsLoading(false)
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="max-w-4xl w-full mx-auto pb-12">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold tracking-tight">{t('settings.title')}</h1>
+                <p className="text-zinc-500 mt-2">{t('settings.subtitle')}</p>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-sm">
+                <form onSubmit={handleSubmit} className="space-y-8">
             
             {message.text && (
                 <div className={`p-4 rounded-xl text-sm font-medium ${message.type === 'success' ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'}`}>
@@ -90,11 +109,11 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
 
             {/* Basic Info */}
             <div className="space-y-4">
-                <h3 className="text-lg font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">Basic Information</h3>
+                <h3 className="text-lg font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">{t('settings.basic_info')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Shop Name</label>
+                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.shop_name')}</label>
                         <input
                             type="text"
                             value={name}
@@ -106,19 +125,19 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                 </div>
 
                 <div className="space-y-2 mt-4">
-                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Shop Description (Shown on Landing Page)</label>
+                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.shop_description')}</label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={3}
-                        placeholder="e.g. Experience traditional barbering combined with modern styling techniques."
+                        placeholder={t('settings.shop_desc_placeholder')}
                         className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow resize-none"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Address (Optional)</label>
+                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.address')}</label>
                         <input
                             type="text"
                             value={address}
@@ -128,7 +147,7 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Phone Number (Optional)</label>
+                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.phone')}</label>
                         <input
                             type="text"
                             value={phone}
@@ -138,14 +157,34 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                         />
                     </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.currency') || 'Local Currency / Moneda'}</label>
+                        <select
+                            value={currency}
+                            onChange={(e) => setCurrency(e.target.value)}
+                            className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow"
+                        >
+                            <option value="USD">USD ($) - US Dollar</option>
+                            <option value="MXN">MXN ($) - Peso Mexicano</option>
+                            <option value="COP">COP ($) - Peso Colombiano</option>
+                            <option value="EUR">EUR (€) - Euro</option>
+                            <option value="GBP">GBP (£) - British Pound</option>
+                            <option value="ARS">ARS ($) - Peso Argentino</option>
+                            <option value="CLP">CLP ($) - Peso Chileno</option>
+                            <option value="PEN">PEN (S/) - Sol Peruano</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             {/* Visuals */}
             <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                <h3 className="text-lg font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">Landing Page Visuals</h3>
+                <h3 className="text-lg font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">{t('settings.visuals')}</h3>
 
                 <div className="space-y-3">
-                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Main Hero Barbershop Image</label>
+                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.hero_image')}</label>
                     
                     <div className="w-full aspect-[21/9] bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative">
                         {heroFile ? (
@@ -153,7 +192,7 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                         ) : heroImageUrl ? (
                             <img src={heroImageUrl} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="text-zinc-400 font-medium">No Hero Image Selected</div>
+                            <div className="text-zinc-400 font-medium">{t('settings.no_hero_image')}</div>
                         )}
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             <input
@@ -167,14 +206,14 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                                 className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                                 title="Click to upload Hero Image"
                             />
-                            <span className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg font-medium shadow-md pointer-events-none">Change Image</span>
+                            <span className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg font-medium shadow-md pointer-events-none">{t('settings.change_image')}</span>
                         </div>
                     </div>
-                    <p className="text-xs text-zinc-500">Pick a wide, high-quality image of the interior of your shop. It will be the first thing customers see.</p>
+                    <p className="text-xs text-zinc-500">{t('settings.hero_hint')}</p>
                 </div>
 
                 <div className="space-y-3 pt-6">
-                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Upload Shop Gallery (Interior, tools, products)</label>
+                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.upload_gallery')}</label>
                     <input
                         type="file"
                         accept="image/*"
@@ -195,9 +234,57 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                             }
                         </div>
                     )}
-                    <p className="text-xs text-zinc-500">Upload multiple photos of your shop. Selecting new photos overwrites the existing gallery.</p>
+                    <p className="text-xs text-zinc-500">{t('settings.gallery_hint')}</p>
                 </div>
 
+            </div>
+
+            {/* App Modules (Feature Flags) */}
+            <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <h3 className="text-lg font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">App Modules</h3>
+                <p className="text-sm text-zinc-500 pb-4">Activa o desactiva las funcionalidades opcionales de tu barbería.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-black dark:hover:border-white transition-colors">
+                        <div>
+                            <span className="block font-bold">Advanced CRM (Clientes)</span>
+                            <span className="text-xs text-zinc-500">Activa notas privadas y perfiles detallados por cliente.</span>
+                        </div>
+                        <input type="checkbox" checked={isCrmEnabled} onChange={(e) => setIsCrmEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
+                    </label>
+
+                    <label className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-black dark:hover:border-white transition-colors">
+                        <div>
+                            <span className="block font-bold">POS & Inventario</span>
+                            <span className="text-xs text-zinc-500">Punto de venta físico, caja registradora virtual y catálogo Retail.</span>
+                        </div>
+                        <input type="checkbox" checked={isPosEnabled} onChange={(e) => setIsPosEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
+                    </label>
+
+                    <label className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-black dark:hover:border-white transition-colors">
+                        <div>
+                            <span className="block font-bold">Gamificación de Staff</span>
+                            <span className="text-xs text-zinc-500">Métricas avanzadas y metas mensuales por barbero en Contabilidad.</span>
+                        </div>
+                        <input type="checkbox" checked={isGamificationEnabled} onChange={(e) => setIsGamificationEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
+                    </label>
+
+                    <label className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-black dark:hover:border-white transition-colors">
+                        <div>
+                            <span className="block font-bold text-zinc-400">Marketing & No-Shows</span>
+                            <span className="text-xs text-zinc-500">Penalizaciones dinámicas y Mail blasts.</span>
+                        </div>
+                        <input type="checkbox" checked={isMarketingEnabled} onChange={(e) => setIsMarketingEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
+                    </label>
+
+                    <label className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-black dark:hover:border-white transition-colors">
+                        <div>
+                            <span className="block font-bold text-zinc-400">Loyalty Programs</span>
+                            <span className="text-xs text-zinc-500">Puntos de lealtad para clientes finales.</span>
+                        </div>
+                        <input type="checkbox" checked={isLoyaltyEnabled} onChange={(e) => setIsLoyaltyEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
+                    </label>
+                </div>
             </div>
 
             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
@@ -206,9 +293,11 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                     disabled={isLoading}
                     className="w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-lg"
                 >
-                    {isLoading ? 'Saving Changes to Shop...' : 'Save Barbershop Settings'}
+                    {isLoading ? t('settings.saving') : t('settings.save')}
                 </button>
             </div>
         </form>
+            </div>
+        </div>
     )
 }

@@ -7,16 +7,38 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
 
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
+  emailVerified DateTime?
+  image         String?
   passwordHash  String?
   phone         String?
   role          String    @default("CUSTOMER")
@@ -27,6 +49,8 @@ model User {
   portfolioUrls String?   // Comma-separated list of image URLs
 
   // Relations
+  accounts      Account[]
+  
   barbershopId  String?
   barbershop    Barbershop? @relation("StaffToShop", fields: [barbershopId], references: [id])
   
@@ -35,6 +59,16 @@ model User {
 
   schedules     Schedule[]
   timeOffs      TimeOff[]
+
+  clientNotes    ClientNote[] @relation("CustomerNotes")
+  notesWritten   ClientNote[] @relation("BarberNotes")
+  staffGoals     StaffGoal[]
+  salesMade      Sale[]       @relation("BarberSales")
+  purchases      Sale[]       @relation("CustomerPurchases")
+
+  // Client Metrics
+  loyaltyPoints  Int          @default(0)
+  noShowCount    Int          @default(0)
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -56,6 +90,20 @@ model Barbershop {
   services    Service[]
   appointments Appointment[]
   timeOffs    ShopTimeOff[]
+  clientNotes ClientNote[]
+  staffGoals  StaffGoal[]
+  products    Product[]
+  sales       Sale[]
+
+  // Feature Flags (App Modules)
+  isCrmEnabled          Boolean @default(true)
+  isPosEnabled          Boolean @default(true)
+  isGamificationEnabled Boolean @default(true)
+  isMarketingEnabled    Boolean @default(false)
+  isLoyaltyEnabled      Boolean @default(false)
+
+  // Regional/Localization
+  currency              String  @default("USD")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -143,4 +191,92 @@ model ShopTimeOff {
   updatedAt    DateTime   @updatedAt
 
   @@unique([barbershopId, date])
+}
+
+model ClientNote {
+  id           String     @id @default(cuid())
+  content      String     @db.Text
+  
+  customerId   String
+  customer     User       @relation("CustomerNotes", fields: [customerId], references: [id], onDelete: Cascade)
+  
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  
+  authorId     String?
+  author       User?      @relation("BarberNotes", fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model StaffGoal {
+  id           String     @id @default(cuid())
+  
+  barberId     String
+  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  
+  month        Int        // 1-12
+  year         Int        // e.g., 2024
+  targetAmount Float      // The revenue goal for the month
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@unique([barberId, month, year])
+}
+
+model Product {
+  id           String     @id @default(cuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  
+  name         String
+  description  String?
+  price        Float
+  stock        Int        @default(0)
+  sku          String?
+  imageUrl     String?
+
+  saleItems    SaleItem[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Sale {
+  id           String     @id @default(cuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  
+  barberId     String
+  barber       User       @relation("BarberSales", fields: [barberId], references: [id])
+  
+  customerId   String?
+  customer     User?      @relation("CustomerPurchases", fields: [customerId], references: [id], onDelete: SetNull)
+
+  items        SaleItem[]
+  totalAmount  Float
+  paymentMethod String     @default("CASH") // CASH, CARD, OTHER
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model SaleItem {
+  id           String     @id @default(cuid())
+  saleId       String
+  sale         Sale       @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  
+  quantity     Int
+  priceAtSale  Float
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }

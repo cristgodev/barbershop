@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
+import { sendAppointmentWebhook } from '../../../lib/webhook'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../lib/auth'
 
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json()
-        const { appointmentId } = body
+        const { appointmentId, isNoShow } = body
 
         if (!appointmentId) {
             return new NextResponse('Missing appointment ID', { status: 400 })
@@ -40,6 +41,16 @@ export async function POST(req: Request) {
             where: { id: appointmentId },
             data: { status: 'CANCELLED' }
         })
+
+        if (isNoShow && isShopOwner && updated.customerId) {
+            await prisma.user.update({
+                where: { id: updated.customerId },
+                data: { noShowCount: { increment: 1 } }
+            })
+        }
+
+        // Trigger WhatsApp Webhook for cancellation 
+        sendAppointmentWebhook(updated.id, 'APPOINTMENT_CANCELLED')
 
         return NextResponse.json(updated)
 

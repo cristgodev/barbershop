@@ -21,6 +21,7 @@ export default async function AccountingPage() {
                     barber: true
                 }
             },
+            sales: true,
             staff: true
         }
     })
@@ -38,9 +39,9 @@ export default async function AccountingPage() {
 
     // Helper to initialize a PeriodStats object
     const initPeriod = () => {
-        const stats = { totalRevenue: 0, totalCuts: 0, barbers: {} as Record<string, { name: string, revenue: number, cuts: number }> }
+        const stats = { totalRevenue: 0, totalCuts: 0, barbers: {} as Record<string, { id: string, name: string, revenue: number, cuts: number }> }
         barbershop.staff.forEach(staff => {
-            stats.barbers[staff.id] = { name: staff.name || 'Unknown', revenue: 0, cuts: 0 }
+            stats.barbers[staff.id] = { id: staff.id, name: staff.name || 'Unknown', revenue: 0, cuts: 0 }
         })
         return stats
     }
@@ -98,12 +99,51 @@ export default async function AccountingPage() {
         }
     })
 
+    // Aggregate Product Sales
+    barbershop.sales.forEach(sale => {
+        const saleDate = new Date(sale.createdAt)
+        const saleTime = saleDate.getTime()
+        const price = sale.totalAmount || 0
+        const barberId = sale.barberId
+
+        // All Time
+        rawStats.all.totalRevenue += price
+        if (rawStats.all.barbers[barberId]) {
+            rawStats.all.barbers[barberId].revenue += price
+        }
+
+        // Today
+        if (saleTime >= todayStart.getTime() && saleTime < todayStart.getTime() + 86400000) {
+            rawStats.today.totalRevenue += price
+            if (rawStats.today.barbers[barberId]) {
+                rawStats.today.barbers[barberId].revenue += price
+            }
+        }
+
+        // This Week
+        if (saleTime >= weekStart.getTime()) {
+            rawStats.week.totalRevenue += price
+            if (rawStats.week.barbers[barberId]) {
+                rawStats.week.barbers[barberId].revenue += price
+            }
+        }
+
+        // This Month
+        if (saleTime >= monthStart.getTime()) {
+            rawStats.month.totalRevenue += price
+            if (rawStats.month.barbers[barberId]) {
+                rawStats.month.barbers[barberId].revenue += price
+            }
+        }
+    })
+
     // Sort barbers by revenue for each period
     const sortBarbers = (periodObj: any) => {
         return Object.values(periodObj).sort((a: any, b: any) => b.revenue - a.revenue)
     }
 
     const finalStats = {
+        currency: barbershop.currency,
         today: { ...rawStats.today, barbers: sortBarbers(rawStats.today.barbers) },
         week: { ...rawStats.week, barbers: sortBarbers(rawStats.week.barbers) },
         month: { ...rawStats.month, barbers: sortBarbers(rawStats.month.barbers) },

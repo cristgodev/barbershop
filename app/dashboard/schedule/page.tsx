@@ -61,13 +61,6 @@ export default async function SchedulePage() {
 
     return (
         <div className="max-w-6xl w-full mx-auto pb-12">
-            <div className="flex items-center justify-between pb-6 mb-8">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Schedule & Time Off</h2>
-                    <p className="text-zinc-500 mt-2">Manage your working hours and upcoming vacations.</p>
-                </div>
-            </div>
-
             <ScheduleForm
                 staffMembers={staffMembers}
                 initialSchedules={schedules}

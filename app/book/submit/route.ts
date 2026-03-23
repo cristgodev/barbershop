@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma"
 import { redirect } from "next/navigation"
+import { sendAppointmentWebhook } from "../../lib/webhook"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../../lib/auth"
 
@@ -91,6 +92,9 @@ export async function POST(request: Request) {
         },
         include: { customer: true, barber: true }
     })
+
+    // Trigger WhatsApp Webhook
+    sendAppointmentWebhook(appointment.id, 'APPOINTMENT_BOOKED')
 
     // Simulate WhatsApp API integration in local mode
     console.log(`[WHATSAPP API SIMULATION] ---------------------------------------`)

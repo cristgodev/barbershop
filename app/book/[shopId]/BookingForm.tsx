@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '../../contexts/LanguageContext'
 
 type Service = { id: string; name: string; price: number; durationMins: number }
 type Staff = { id: string; name: string | null; role: string; avatarUrl?: string | null }
@@ -30,6 +31,7 @@ export default function BookingForm({
     customerId: string | null;
 }) {
     const router = useRouter()
+    const { t } = useTranslation()
 
     const [selectedService, setSelectedService] = useState('')
     const [selectedBarber, setSelectedBarber] = useState('')
@@ -197,7 +199,7 @@ export default function BookingForm({
         }
 
         if (!customerId) {
-            setError('Please sign in to book an appointment.')
+            setError(t('booking.error_signin'))
             return
         }
 
@@ -237,7 +239,7 @@ export default function BookingForm({
             <div className="space-y-10">
                 {/* Step 1: Service */}
                 <div>
-                    <h3 className="text-xl font-semibold mb-4 text-black dark:text-white">1. Select Service</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-black dark:text-white">1. {t('booking.select_service')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {services.map(service => (
                             <div 
@@ -269,12 +271,12 @@ export default function BookingForm({
                 {/* Only show next steps if a service is selected */}
                 {selectedService && (
                     <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                        {/* Booking Steps container - Dimmed if not logged in */}
-                        <div className={`space-y-6 ${!customerId ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                        {/* Booking Steps container */}
+                        <div className="space-y-6">
                             {/* Staff Grid */}
                             <div>
                                 <label className="text-sm font-bold text-zinc-900 dark:text-white mb-3 block border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                                    Select Professional
+                                    {t('booking.select_barber')}
                                 </label>
                                 {staff.length === 1 ? (
                                     <div className="flex items-center gap-4 p-4 rounded-2xl border-2 border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 transition-all">
@@ -325,11 +327,28 @@ export default function BookingForm({
                                 )}
                             </div>
 
-                            {/* Step 2: Date and Time Section */}
+                            {/* Step 2: Date and Time Section / Login Prompt */}
                             <div>
-                                <h3 className="text-xl font-semibold">{staff.length > 1 ? '3.' : '2.'} Select Date & Time</h3>
+                                <h3 className="text-xl font-semibold">{staff.length > 1 ? '3.' : '2.'} {t('booking.select_datetime')}</h3>
                                 {!selectedBarber ? (
-                                    <div className="text-zinc-500 text-sm py-4">Please select a professional first.</div>
+                                    <div className="text-zinc-500 text-sm py-4">{t('booking.select_barber_first')}</div>
+                                ) : !customerId ? (
+                                    <div className="mt-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 text-center shadow-sm">
+                                        <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg className="w-6 h-6 text-zinc-600 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                        <h4 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">{t('booking.signin_to_view')}</h4>
+                                        <p className="text-zinc-500 text-sm mb-6 max-w-sm mx-auto">{t('booking.create_account_to_see').replace('{name}', staff.find((s: Staff) => s.id === selectedBarber)?.name || 'the professional')}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => router.push(`/client/login?returnUrl=/book/${shopId}`)}
+                                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black py-3 px-8 rounded-xl font-bold transition-all shadow-md active:scale-95"
+                                        >
+                                            {t('booking.signin_continue')}
+                                        </button>
+                                    </div>
                                 ) : (
                                     <div className="space-y-6 mt-4">
                                         {/* Horizontal Date Selector */}
@@ -375,7 +394,7 @@ export default function BookingForm({
                                                     {!isBarberAvailableOnDate ? (
                                                         <div className="text-amber-600 dark:text-amber-500 font-medium py-2 flex items-center gap-2">
                                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                                            Professional unavailable this day
+                                                            {t('booking.unavailable')}
                                                         </div>
                                                     ) : (
                                                         <>
@@ -397,7 +416,7 @@ export default function BookingForm({
                                                                         </button>
                                                                     )
                                                                 }) : (
-                                                                    <div className="col-span-full py-2 text-zinc-500">No time slots configured.</div>
+                                                                    <div className="col-span-full py-2 text-zinc-500">{t('booking.no_slots')}</div>
                                                                 )}
                                                             </div>
                                                         </>
@@ -414,21 +433,13 @@ export default function BookingForm({
             </div>
 
             <div className="pt-4">
-                {!customerId ? (
-                    <button
-                        type="button"
-                        onClick={() => router.push(`/client/login?returnUrl=/book/${shopId}`)}
-                        className="w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black py-4 rounded-xl font-semibold text-lg transition-colors cursor-pointer shadow-md"
-                    >
-                        Sign in to Book
-                    </button>
-                ) : (
+                {customerId && (
                     <button
                         type="submit"
-                        disabled={isSubmitting || !isBarberAvailableOnDate}
-                        className="w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black py-4 rounded-xl font-semibold text-lg transition-colors disabled:opacity-50"
+                        disabled={isSubmitting || !isBarberAvailableOnDate || !selectedDate || !selectedTime}
+                        className="w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black py-4 rounded-xl font-semibold text-lg transition-colors disabled:opacity-50 shadow-md"
                     >
-                        {isSubmitting ? 'Confirming...' : 'Confirm Booking'}
+                        {isSubmitting ? t('booking.submitting') : t('booking.confirm')}
                     </button>
                 )}
             </div>

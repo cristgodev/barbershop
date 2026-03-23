@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '../../contexts/LanguageContext'
 
 type User = { id: string; name: string | null; role: string }
 type Schedule = { id?: string; barberId: string; dayOfWeek: number; startTime: string; endTime: string; isWorkingDay: boolean }
@@ -26,6 +27,7 @@ export default function ScheduleForm({
     barbershopId: string;
 }) {
     const router = useRouter()
+    const { t } = useTranslation()
     const [selectedBarber, setSelectedBarber] = useState(staffMembers[0]?.id || '')
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState('')
@@ -79,12 +81,12 @@ export default function ScheduleForm({
                 body: JSON.stringify({ schedules })
             })
 
-            if (!res.ok) throw new Error('Failed to save schedules')
+            if (!res.ok) throw new Error(t('schedule.error_occurred'))
 
-            setMessage('Schedules saved successfully!')
+            setMessage(t('schedule.success_save_schedules'))
             router.refresh()
         } catch (error: any) {
-            setMessage(error.message || 'An error occurred')
+            setMessage(error.message || t('schedule.error_occurred'))
         } finally {
             setIsLoading(false)
         }
@@ -107,9 +109,9 @@ export default function ScheduleForm({
                 body: JSON.stringify({ barberId: selectedBarber, date: timeOffDate, reason: timeOffReason })
             })
 
-            if (!res.ok) throw new Error('Failed to add time off')
+            if (!res.ok) throw new Error(t('schedule.error_occurred'))
 
-            setMessage('Time off added successfully!')
+            setMessage(t('schedule.success_add_timeoff'))
             setTimeOffDate('')
             setTimeOffReason('')
             router.refresh()
@@ -139,9 +141,9 @@ export default function ScheduleForm({
                 body: JSON.stringify({ barbershopId, date: shopTimeOffDate, reason: shopTimeOffReason })
             })
 
-            if (!res.ok) throw new Error('Failed to add global shop closure')
+            if (!res.ok) throw new Error(t('schedule.error_occurred'))
 
-            setMessage('Shop closure added successfully! It will reflect in all bookings immediately.')
+            setMessage(t('schedule.success_add_timeoff')) // Reuse or make specific success message
             setShopTimeOffDate('')
             setShopTimeOffReason('')
             router.refresh()
@@ -154,11 +156,17 @@ export default function ScheduleForm({
 
     return (
         <div className="space-y-8 md:space-y-12">
+            <div className="flex items-center justify-between pb-6">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">{t('schedule.title')}</h2>
+                    <p className="text-zinc-500 mt-2">{t('schedule.subtitle')}</p>
+                </div>
+            </div>
 
             {/* Barber Selector */}
             {staffMembers.length > 1 && (
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm">
-                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">Select Staff Member to Manage</label>
+                    <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">{t('schedule.select_staff')}</label>
                     <select
                         value={selectedBarber}
                         onChange={handleBarberChange}
@@ -180,8 +188,8 @@ export default function ScheduleForm({
 
             {/* Weekly Schedule */}
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm">
-                <h2 className="text-xl font-bold mb-1">Weekly Schedule</h2>
-                <p className="text-sm text-zinc-500 mb-6">Set regular working hours for each day of the week.</p>
+                <h2 className="text-xl font-bold mb-1">{t('schedule.weekly_title')}</h2>
+                <p className="text-sm text-zinc-500 mb-6">{t('schedule.weekly_desc')}</p>
                 <div className="space-y-3">
                     {schedules.map((schedule) => (
                         <div key={schedule.dayOfWeek} className="group flex flex-col sm:flex-row items-center gap-4 p-4 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 transition-colors">
@@ -198,7 +206,7 @@ export default function ScheduleForm({
                                     </div>
                                 </label>
                                 <span className={`font-semibold ${schedule.isWorkingDay ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}>
-                                    {DAYS_OF_WEEK[schedule.dayOfWeek]}
+                                    {t(`schedule.days.${DAYS_OF_WEEK[schedule.dayOfWeek]}`)}
                                 </span>
                             </div>
 
@@ -209,7 +217,7 @@ export default function ScheduleForm({
                                     onChange={(e) => handleScheduleChange(schedule.dayOfWeek, 'startTime', e.target.value)}
                                     className="px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm w-full focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition-all font-medium"
                                 />
-                                <span className="text-zinc-400 text-sm font-medium">to</span>
+                                <span className="text-zinc-400 text-sm font-medium">{t('schedule.to')}</span>
                                 <input
                                     type="time"
                                     value={schedule.endTime}
@@ -226,19 +234,19 @@ export default function ScheduleForm({
                     disabled={isLoading}
                     className="mt-8 bg-black hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200 px-6 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto"
                 >
-                    {isLoading ? 'Saving...' : 'Save Weekly Schedule'}
+                    {isLoading ? t('schedule.saving') : t('schedule.save_weekly')}
                 </button>
             </div>
 
             {/* Shop-Wide Closures (OWNER ONLY) */}
             {currentUserRole === 'OWNER' && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm">
-                    <h2 className="text-xl font-bold mb-1 text-white">Full Shop Closures <span className="text-xs font-semibold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded ml-2 border border-blue-500/20">Shop-Wide</span></h2>
-                    <p className="text-sm text-zinc-400 mb-6">Schedule days when the entire barbershop will be closed (e.g., National Holidays). <strong className="text-zinc-300">All bookings</strong> will be disabled for these dates.</p>
+                    <h2 className="text-xl font-bold mb-1 text-white">{t('schedule.full_shop_closures')} <span className="text-xs font-semibold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded ml-2 border border-blue-500/20">{t('schedule.shop_wide')}</span></h2>
+                    <p className="text-sm text-zinc-400 mb-6">{t('schedule.shop_closures_desc')}</p>
 
                     <form onSubmit={addShopTimeOff} className="flex flex-col sm:flex-row gap-4 items-end mb-8 p-5 border border-zinc-800 bg-black/30 rounded-xl">
                         <div className="w-full sm:flex-1 space-y-1.5">
-                            <label className="block text-xs font-semibold text-zinc-300">Date to Close Shop</label>
+                            <label className="block text-xs font-semibold text-zinc-300">{t('schedule.date_to_close')}</label>
                             <input
                                 type="date"
                                 required
@@ -249,7 +257,7 @@ export default function ScheduleForm({
                             />
                         </div>
                         <div className="w-full sm:flex-1 space-y-1.5">
-                            <label className="block text-xs font-semibold text-zinc-300">Reason (e.g., National Holiday)</label>
+                            <label className="block text-xs font-semibold text-zinc-300">{t('schedule.reason_holiday')}</label>
                             <input
                                 type="text"
                                 placeholder="Public Reason"
@@ -263,7 +271,7 @@ export default function ScheduleForm({
                             disabled={isLoading || !shopTimeOffDate}
                             className="w-full sm:w-auto bg-white hover:bg-zinc-200 text-black px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                         >
-                            Schedule Closure
+                            {t('schedule.schedule_closure')}
                         </button>
                     </form>
 
@@ -274,7 +282,7 @@ export default function ScheduleForm({
                                 return (
                                     <div key={timeOff.id} className="group flex flex-col justify-between p-5 border border-zinc-800 rounded-2xl bg-zinc-950/50 hover:border-red-900/50 transition-colors">
                                         <div className="mb-4">
-                                            <div className="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-1">Shop Closed</div>
+                                            <div className="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-1">{t('schedule.shop_closed')}</div>
                                             <div className="font-bold text-lg text-white">
                                                 {dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                                             </div>
@@ -289,26 +297,26 @@ export default function ScheduleForm({
                                             }}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                            Re-Open Date
+                                            {t('schedule.re_open')}
                                         </button>
                                     </div>
                                 )
                             })}
                         </div>
                     ) : (
-                        <p className="text-zinc-500 text-sm">No global shop closures scheduled.</p>
+                        <p className="text-zinc-500 text-sm">{t('schedule.no_shop_closures')}</p>
                     )}
                 </div>
             )}
 
             {/* Exceptions / Time Off (Barber Level) */}
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm">
-                <h2 className="text-xl font-bold mb-1">Time Off (Individual Barber)</h2>
-                <p className="text-sm text-zinc-500 mb-6">Block off specific dates for vacations, sick days, or personal days for <strong>{staffMembers.find(s => s.id === selectedBarber)?.name || 'this barber'}</strong>.</p>
+                <h2 className="text-xl font-bold mb-1">{t('schedule.time_off_individual')}</h2>
+                <p className="text-sm text-zinc-500 mb-6">{t('schedule.time_off_desc_pt1')} <strong>{staffMembers.find(s => s.id === selectedBarber)?.name || t('schedule.time_off_desc_pt2')}</strong>.</p>
 
                 <form onSubmit={addTimeOff} className="flex flex-col sm:flex-row gap-4 items-end mb-8 p-5 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl">
                     <div className="w-full sm:flex-1 space-y-1.5">
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">Date</label>
+                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t('schedule.date')}</label>
                         <input
                             type="date"
                             required
@@ -319,7 +327,7 @@ export default function ScheduleForm({
                         />
                     </div>
                     <div className="w-full sm:flex-1 space-y-1.5">
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">Reason (Optional)</label>
+                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t('schedule.reason_optional')}</label>
                         <input
                             type="text"
                             placeholder="e.g., Summer Vacation"
@@ -333,7 +341,7 @@ export default function ScheduleForm({
                         disabled={isLoading || !timeOffDate}
                         className="w-full sm:w-auto bg-black hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
-                        Block Date
+                        {t('schedule.block_date')}
                     </button>
                 </form>
 
@@ -344,7 +352,7 @@ export default function ScheduleForm({
                             return (
                                 <div key={timeOff.id} className="group flex flex-col justify-between p-5 border border-red-100 dark:border-red-900/30 rounded-2xl bg-red-50/50 dark:bg-red-900/10 hover:border-red-200 dark:hover:border-red-900/50 transition-colors">
                                     <div className="mb-4">
-                                        <div className="text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-1">Time Off</div>
+                                        <div className="text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-1">{t('schedule.time_off')}</div>
                                         <div className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
                                             {dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                                         </div>
@@ -359,7 +367,7 @@ export default function ScheduleForm({
                                         }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                        Remove
+                                        {t('schedule.remove')}
                                     </button>
                                 </div>
                             )
@@ -368,8 +376,8 @@ export default function ScheduleForm({
                 ) : (
                     <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/50 text-center">
                         <svg className="w-8 h-8 text-zinc-400 dark:text-zinc-600 mb-3" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                        <p className="text-zinc-600 dark:text-zinc-400 font-medium">No upcoming time off scheduled.</p>
-                        <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Use the form above to add one.</p>
+                        <p className="text-zinc-600 dark:text-zinc-400 font-medium">{t('schedule.no_upcoming_timeoff')}</p>
+                        <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">{t('schedule.use_form_above')}</p>
                     </div>
                 )}
             </div>

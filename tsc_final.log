@@ -1,0 +1,6 @@
+app/[slug]/ShopClient.tsx(3,80): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/book/success/[appointmentId]/page.tsx(3,129): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/clients/[id]/ClientProfileClient.tsx(3,136): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/clients/ClientsListClient.tsx(5,89): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/inventory/InventoryClient.tsx(4,96): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.
+app/dashboard/pos/PosClient.tsx(5,96): error TS2307: Cannot find module '@heroicons/react/24/outline' or its corresponding type declarations.

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../lib/auth"
 import DashboardClient from "./DashboardClient"
 import DashboardAnalytics from "./DashboardAnalytics"
+import OverviewHeaderClient from "./OverviewHeaderClient"
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +56,7 @@ export default async function DashboardPage() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
     const stats = {
+        currency: shop!.currency,
         today: { count: 0, revenue: 0, pending: 0 },
         week: { count: 0, revenue: 0, pending: 0 },
         month: { count: 0, revenue: 0, pending: 0 },
@@ -145,13 +147,7 @@ export default async function DashboardPage() {
     return (
         <div className="flex flex-col gap-8 pb-12 w-full max-w-7xl mx-auto">
             
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-extrabold tracking-tight">Overview</h1>
-                <a href="/book" className="bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black px-6 py-2.5 rounded-xl font-semibold text-sm transition-transform hover:scale-105 active:scale-95 shadow-md flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2.75C8 2.47386 7.77614 2.25 7.5 2.25C7.22386 2.25 7 2.47386 7 2.75V7H2.75C2.47386 7 2.25 7.22386 2.25 7.5C2.25 7.77614 2.47386 8 2.75 8H7V12.25C7 12.5261 7.22386 12.75 7.5 12.75C7.77614 12.75 8 12.5261 8 12.25V8H12.25C12.5261 8 12.75 7.77614 12.75 7.5C12.75 7.22386 12.5261 7 12.25 7H8V2.75Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-                    New Booking
-                </a>
-            </div>
+            <OverviewHeaderClient />
 
             {/* Dynamic Interactive KPI Cards & Chart */}
             <DashboardAnalytics stats={stats} charts={{ today: todayChart, week: weekChart, month: monthChart }} />

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "./providers";
+import LanguageSwitcher from "./components/LanguageSwitcher";
+import TopNavLinks from "./components/TopNavLinks";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,19 +41,18 @@ export default function RootLayout({
             <div className="w-8 h-8 bg-yellow-600 rounded flex items-center justify-center font-bold text-zinc-50 dark:text-zinc-950 group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.2)]">B</div>
             <h1 className="text-xl font-bold tracking-wide font-serif text-zinc-900 dark:text-white uppercase" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Barbershop</h1>
           </a>
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-500 transition-colors">Servicios</a>
-            <a href="#" className="text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-500 transition-colors">Staff</a>
-            <a href="#" className="text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-500 transition-colors">Contacto</a>
-          </nav>
-          <a href="/login" className="bg-yellow-600 hover:bg-yellow-500 text-zinc-50 dark:text-zinc-950 px-6 py-2.5 rounded-full text-sm font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:shadow-[0_0_20px_rgba(234,179,8,0.3)]">
-            Acceso Socios
-          </a>
+          <TopNavLinks />
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
+            <a href="/login" className="hidden sm:inline-block bg-yellow-600 hover:bg-yellow-500 text-zinc-50 dark:text-zinc-950 px-6 py-2.5 rounded-full text-sm font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+              Acceso Socios
+            </a>
+          </div>
         </header>
         <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto p-6 md:p-8">
           {children}
         </main>
-        <footer className="py-8 text-center text-sm text-zinc-500 border-t border-zinc-200 dark:border-zinc-800">
+        <footer id="contacto" className="py-8 text-center text-sm text-zinc-500 border-t border-zinc-200 dark:border-zinc-800">
           <p>© {new Date().getFullYear()} Barbershop SaaS. All rights reserved.</p>
         </footer>
         </ThemeProvider>

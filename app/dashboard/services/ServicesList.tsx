@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { formatCurrency } from '../../lib/currency'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '../../contexts/LanguageContext'
 
 type Service = {
     id: string
@@ -11,12 +13,13 @@ type Service = {
     description: string | null
 }
 
-export default function ServicesList({ initialServices }: { initialServices: Service[] }) {
+export default function ServicesList({ initialServices, shopCurrency }: { initialServices: Service[], shopCurrency: string }) {
     const router = useRouter()
+    const { t } = useTranslation()
     const [deletingId, setDeletingId] = useState<string | null>(null)
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this service?')) return
+        if (!confirm(t('services.are_you_sure'))) return
 
         setDeletingId(id)
         try {
@@ -26,12 +29,12 @@ export default function ServicesList({ initialServices }: { initialServices: Ser
 
             if (!res.ok) {
                 const data = await res.json()
-                alert(data.error || 'Failed to delete service')
+                alert(data.error || t('services.error_occurred'))
             } else {
                 router.refresh()
             }
         } catch (error) {
-            alert('An unexpected error occurred')
+            alert(t('services.error_occurred'))
         } finally {
             setDeletingId(null)
         }
@@ -41,8 +44,8 @@ export default function ServicesList({ initialServices }: { initialServices: Ser
         return (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-12 text-center text-zinc-500 flex flex-col items-center shadow-sm">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4 opacity-50"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                <p className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 mb-1">No services yet</p>
-                <p>Use the form on the right to add your first service.</p>
+                <p className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 mb-1">{t('services.no_services_yet')}</p>
+                <p>{t('services.use_form')}</p>
             </div>
         )
     }
@@ -55,7 +58,7 @@ export default function ServicesList({ initialServices }: { initialServices: Ser
                         <div className="flex items-center gap-3 mb-1">
                             <h4 className="font-bold text-lg text-zinc-900 dark:text-zinc-50 truncate">{service.name}</h4>
                             <span className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 text-xs px-2.5 py-1 rounded-full font-bold tracking-wider">
-                                {service.durationMins} MINS
+                                {service.durationMins} {t('services.mins')}
                             </span>
                         </div>
                         {service.description && (
@@ -65,17 +68,17 @@ export default function ServicesList({ initialServices }: { initialServices: Ser
                     
                     <div className="flex items-center gap-6 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800 justify-between sm:justify-end">
                         <div className="text-xl font-extrabold text-black dark:text-white">
-                            ${Number(service.price).toFixed(2)}
+                            {formatCurrency(service.price, shopCurrency)}
                         </div>
                         <button
                             onClick={() => handleDelete(service.id)}
                             disabled={deletingId === service.id}
                             className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 px-3 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
-                            {deletingId === service.id ? 'Deleting...' : (
+                            {deletingId === service.id ? t('services.deleting') : (
                                 <>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                                    Delete
+                                    {t('services.delete')}
                                 </>
                             )}
                         </button>
