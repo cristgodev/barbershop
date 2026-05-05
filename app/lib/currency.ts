@@ -1,5 +1,5 @@
 export function formatCurrency(amount: number, currencyCode: string = 'USD') {
-    // Attempt to map common currencies to their optimal locales for best display
+    const code = (currencyCode || 'USD').toUpperCase();
     const localeMap: Record<string, string> = {
         'USD': 'en-US',
         'MXN': 'es-MX',
@@ -11,12 +11,16 @@ export function formatCurrency(amount: number, currencyCode: string = 'USD') {
         'PEN': 'es-PE',
     };
     
-    const locale = localeMap[currencyCode?.toUpperCase()] || undefined;
+    const locale = localeMap[code] || undefined;
+    
+    // Currencies that practically never use cents in pricing UI
+    const zeroDecimalCurrencies = ['COP', 'CLP', 'ARS', 'JPY', 'KRW', 'PYG'];
+    const fractions = zeroDecimalCurrencies.includes(code) ? 0 : 2;
 
     return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: currencyCode || 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        currency: code,
+        minimumFractionDigits: fractions,
+        maximumFractionDigits: fractions
     }).format(Number(amount));
 }

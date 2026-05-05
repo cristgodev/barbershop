@@ -12,6 +12,8 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
     const [description, setDescription] = useState(shop.description || '')
     const [address, setAddress] = useState(shop.address || '')
     const [phone, setPhone] = useState(shop.phone || '')
+    const [instagramUrl, setInstagramUrl] = useState(shop.instagramUrl || '')
+    const [tiktokUrl, setTiktokUrl] = useState(shop.tiktokUrl || '')
     const [currency, setCurrency] = useState(shop.currency || 'USD')
     
     const [heroImageUrl, setHeroImageUrl] = useState(shop.heroImageUrl || '')
@@ -67,7 +69,7 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name, description, address, phone,
+                    name, description, address, phone, instagramUrl, tiktokUrl,
                     heroImageUrl: finalHeroUrl,
                     galleryUrls: finalGalleryUrls,
                     currency,
@@ -153,6 +155,35 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="+1 (555) 000-0000"
+                            className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            Instagram URL (Tienda)
+                        </label>
+                        <input
+                            type="url"
+                            value={instagramUrl}
+                            onChange={(e) => setInstagramUrl(e.target.value)}
+                            placeholder="https://instagram.com/tu_barberia"
+                            className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+                            TikTok URL (Tienda)
+                        </label>
+                        <input
+                            type="url"
+                            value={tiktokUrl}
+                            onChange={(e) => setTiktokUrl(e.target.value)}
+                            placeholder="https://tiktok.com/@tu_barberia"
                             className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow"
                         />
                     </div>

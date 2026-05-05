@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { MagnifyingGlassIcon, PhoneIcon, EnvelopeIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 import { formatCurrency } from '../../lib/currency'
 import { useTranslation } from '../../contexts/LanguageContext'
+import PageTour from '../PageTour'
 
 type ClientData = {
     id: string
@@ -57,7 +58,21 @@ export default function ClientsListClient({ shopCurrency }: { shopCurrency: stri
     }
 
     return (
-        <div className="w-full max-w-6xl mx-auto pb-12">
+        <div className="w-full max-w-6xl mx-auto pb-12 relative">
+            <PageTour 
+                pageKey="clients" 
+                steps={[
+                    {
+                        element: '#tour-clients-search',
+                        popover: { title: 'Buscador Universal', description: 'Encuentra al instante a cualquier cliente por su nombre, correo electrónico o número de teléfono.', side: 'bottom', align: 'start' }
+                    },
+                    {
+                        element: '#tour-clients-table',
+                        popover: { title: 'Historial y Métrica LTV', description: 'Monitorea las visitas y el dinero total que cada cliente ha gastado en tu negocio. Haz clic en Ver Perfil para añadir Notas Privadas.', side: 'top', align: 'center' }
+                    }
+                ]} 
+            />
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-3xl font-bold font-serif tracking-tight" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
@@ -66,7 +81,7 @@ export default function ClientsListClient({ shopCurrency }: { shopCurrency: stri
                     <p className="text-zinc-500 mt-2">Gestiona el historial de servicios, notas y métricas de tus clientes.</p>
                 </div>
                 
-                <div className="relative w-full md:w-72">
+                <div id="tour-clients-search" className="relative w-full md:w-72">
                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -80,7 +95,7 @@ export default function ClientsListClient({ shopCurrency }: { shopCurrency: stri
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+            <div id="tour-clients-table" className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm whitespace-nowrap">
                         <thead className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 font-medium">

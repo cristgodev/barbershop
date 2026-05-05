@@ -4,7 +4,6 @@ import { authOptions } from "../lib/auth"
 import { prisma } from "../lib/prisma"
 import DashboardNavigation from "./DashboardNavigation"
 import DashboardHeaderClient from "./DashboardHeaderClient"
-
 export default async function DashboardLayout({
   children,
 }: {
@@ -12,8 +11,12 @@ export default async function DashboardLayout({
 }) {
   const session = await getServerSession(authOptions)
 
-  if (!session || !session.user || !session.user.barbershopId) {
+  if (!session || !session.user) {
     redirect('/login')
+  }
+
+  if (!session.user.barbershopId) {
+    redirect('/onboarding')
   }
 
   const shop = await prisma.barbershop.findUnique({
@@ -36,7 +39,8 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col min-h-screen">
         
         {/* TopBar */}
-        <DashboardHeaderClient currentUser={currentUser} />
+        <DashboardHeaderClient currentUser={currentUser} shopSlug={shop.slug} />
+        
 
         {/* Page Content */}
         <main className="flex-1 p-8 overflow-y-auto">

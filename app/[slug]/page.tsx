@@ -1,5 +1,7 @@
 import { prisma } from "../lib/prisma"
 import { notFound } from "next/navigation"
+import { getServerSession } from "next-auth"
+import { authOptions } from "../lib/auth"
 import ShopClient from "./ShopClient"
 
 export default async function BarbershopLandingPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -14,11 +16,13 @@ export default async function BarbershopLandingPage({ params }: { params: Promis
         where: { slug: slug },
         include: {
             services: true,
+            products: true,
             staff: {
                 where: {
                     role: {
                         in: ['OWNER', 'BARBER', 'MANAGER', 'ADMIN']
-                    }
+                    },
+                    showOnLanding: true
                 }
             }
         }
@@ -28,7 +32,10 @@ export default async function BarbershopLandingPage({ params }: { params: Promis
         return notFound()
     }
 
+    const session = await getServerSession(authOptions)
+    const isLoggedIn = !!session?.user
+
     return (
-        <ShopClient shop={shop} slug={slug} />
+        <ShopClient shop={shop} slug={slug} isLoggedIn={isLoggedIn} />
     )
 }

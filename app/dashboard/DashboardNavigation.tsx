@@ -37,13 +37,14 @@ export default function DashboardNavigation({ shop }: { shop: any }) {
                         <Link 
                             key={item.name} 
                             href={item.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${
+                            id={`tour-nav-${item.href === '/dashboard' ? 'overview' : item.href.split('/').pop()}`}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 group ${
                                 isActive 
-                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' 
-                                : 'text-zinc-600 hover:text-black hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'
+                                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm ring-1 ring-black/5 dark:ring-white/10 scale-[1.02]' 
+                                : 'text-zinc-600 hover:text-black hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900/50 hover:translate-x-1'
                             }`}
                         >
-                            <svg className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-70'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <svg className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'opacity-100 scale-105' : 'opacity-70 group-hover:scale-110 group-hover:opacity-100'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                             </svg>
                             {item.name}

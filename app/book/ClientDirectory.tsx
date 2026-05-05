@@ -47,8 +47,9 @@ export default function ClientDirectory({ initialShops }: { initialShops: Shop[]
                         <a
                             key={shop.id}
                             href={shop.slug ? `/${shop.slug}` : `/book/${shop.id}`}
-                            className="bg-zinc-100/50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-8 hover:border-yellow-600 hover:bg-white dark:hover:bg-zinc-900 transition-all group block relative overflow-hidden"
+                            className="bg-zinc-100/50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/40 rounded-3xl p-8 hover:border-yellow-600/50 dark:hover:border-yellow-500/50 hover:bg-white dark:hover:bg-zinc-900/80 transition-all duration-500 group block relative overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-600/5 cursor-pointer"
                         >
+                            <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 via-transparent to-yellow-600/0 group-hover:from-yellow-600/5 group-hover:to-transparent transition-colors duration-500"></div>
                             <h3 className="text-2xl font-bold mb-3 text-zinc-900 dark:text-white font-serif relative z-10" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
                                 {shop.name}
                             </h3>

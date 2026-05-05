@@ -47,6 +47,9 @@ model User {
   bio           String?
   avatarUrl     String?
   portfolioUrls String?   // Comma-separated list of image URLs
+  instagramUrl  String?
+  tiktokUrl     String?
+  showOnLanding Boolean   @default(true)
 
   // Relations
   accounts      Account[]
@@ -84,6 +87,8 @@ model Barbershop {
   // Customization
   heroImageUrl  String?
   galleryUrls   String?   // Comma-separated list of image URLs
+  instagramUrl  String?
+  tiktokUrl     String?
   
   // Relations
   staff       User[]   @relation("StaffToShop")
@@ -96,8 +101,8 @@ model Barbershop {
   sales       Sale[]
 
   // Feature Flags (App Modules)
-  isCrmEnabled          Boolean @default(true)
-  isPosEnabled          Boolean @default(true)
+  isCrmEnabled          Boolean @default(false)
+  isPosEnabled          Boolean @default(false)
   isGamificationEnabled Boolean @default(true)
   isMarketingEnabled    Boolean @default(false)
   isLoyaltyEnabled      Boolean @default(false)

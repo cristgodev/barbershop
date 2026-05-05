@@ -1,5 +1,7 @@
 import { prisma } from "../../../lib/prisma"
 import { notFound, redirect } from "next/navigation"
+import { getServerSession } from "next-auth"
+import { authOptions } from "../../../lib/auth"
 import BarberClient from "./BarberClient"
 
 export default async function BarberMiniPage({ params }: { params: Promise<{ slug: string, barberId: string }> }) {
@@ -27,12 +29,13 @@ export default async function BarberMiniPage({ params }: { params: Promise<{ slu
 
     const barber = shop.staff[0]
 
-    const demoCustomer = await prisma.user.findFirst({
-        where: { role: 'CUSTOMER' }
-    })
-    
-    if (!demoCustomer) {
-        redirect('/')
+    const session = await getServerSession(authOptions)
+    let customerId = null
+
+    // Ensure the ID is only grabbed if it is a CUSTOMER role (or OWNER/ADMIN if they want to book themselves, but normally just user id).
+    // The B2C Booking page allows booking for anyone who is logged in.
+    if (session?.user?.id) {
+        customerId = session.user.id
     }
 
     const schedules = await prisma.schedule.findMany({ where: { barberId: barber.id } })
@@ -76,7 +79,7 @@ export default async function BarberMiniPage({ params }: { params: Promise<{ slu
             timeOffs={timeOffs}
             shopTimeOffs={shopTimeOffs}
             appointments={appointments}
-            demoCustomer={demoCustomer}
+            customerId={customerId}
         />
     )
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ClockIcon, UserIcon, CheckCircleIcon, ShoppingBagIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { formatCurrency } from '../../lib/currency'
+import PageTour from '../PageTour'
 
 type Product = { id: string, name: string, price: number, stock: number, imageUrl: string | null }
 type Client = { id: string, name: string, email: string | null }
@@ -106,7 +107,21 @@ export default function PosClient({ barbershopId, shopCurrency }: { barbershopId
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto pb-12">
+        <div className="w-full max-w-7xl mx-auto pb-12 relative">
+            <PageTour 
+                pageKey="pos" 
+                steps={[
+                    {
+                        element: '#tour-pos-catalog',
+                        popover: { title: 'Tu Inventario Físico', description: 'Aquí aparecerán las ceras, geles o bebidas que hayas registrado. Al hacer clic, se añadirán al carrito y se descontarán del stock al cobrar.', side: 'right', align: 'start' }
+                    },
+                    {
+                        element: '#tour-pos-cart',
+                        popover: { title: 'Ticket de Venta', description: 'Puedes vincular la venta a un cliente existente (para su historial y CRM), ajustar las cantidades y marcar si el pago fue con Efectivo o Tarjeta.', side: 'left', align: 'start' }
+                    }
+                ]} 
+            />
+
             <h1 className="text-3xl font-bold font-serif tracking-tight mb-8" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
                 Punto de Venta (POS)
             </h1>
@@ -121,7 +136,7 @@ export default function PosClient({ barbershopId, shopCurrency }: { barbershopId
                 {/* Controles y Catálogo (Izquierda) */}
                 <div className="flex-1 flex flex-col gap-6">
                     {/* Buscador de productos o scanner */}
-                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
+                    <div id="tour-pos-catalog" className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
                         <h2 className="text-lg font-bold mb-4">Catálogo Rápido</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             {products.map(product => (
@@ -148,7 +163,7 @@ export default function PosClient({ barbershopId, shopCurrency }: { barbershopId
                 </div>
 
                 {/* Ticket y Checkout (Derecha) */}
-                <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-lg overflow-hidden h-fit">
+                <div id="tour-pos-cart" className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-lg overflow-hidden h-fit">
                     <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
                         <h2 className="text-xl font-bold font-serif mb-4 text-center">Ticket de Venta</h2>
                         

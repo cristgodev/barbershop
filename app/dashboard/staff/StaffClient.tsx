@@ -2,12 +2,27 @@
 
 import { useTranslation } from '../../contexts/LanguageContext';
 import AddStaffForm from "./AddStaffForm"
+import PageTour from '../PageTour'
 
 export default function StaffClient({ staffMembers, shopSlug, barbershopId }: { staffMembers: any[], shopSlug: string, barbershopId: string }) {
     const { t } = useTranslation()
 
     return (
-        <div className="max-w-6xl w-full mx-auto pb-12">
+        <div className="max-w-6xl w-full mx-auto pb-12 relative">
+            <PageTour 
+                pageKey="staff" 
+                steps={[
+                    {
+                        element: '#tour-staff-list',
+                        popover: { title: 'Tu Equipo de Barberos', description: 'Aquí verás a todos tus empleados. Puedes editar sus datos, gestionar sus horarios de disponibilidad individual, o definir sus metas.', side: 'right', align: 'start' }
+                    },
+                    {
+                        element: '#tour-staff-add',
+                        popover: { title: 'Cruza las fronteras', description: 'Para sumar a un nuevo barbero a tu local instantáneamente, solo ingresa su Nombre, Correo y asígnale una contraseña temporal.', side: 'left', align: 'start' }
+                    }
+                ]} 
+            />
+
             <div className="flex items-center justify-between pb-6 mb-8 border-b border-zinc-200 dark:border-zinc-800">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">{t('staff.title')}</h2>
@@ -18,7 +33,7 @@ export default function StaffClient({ staffMembers, shopSlug, barbershopId }: { 
             <div className="flex flex-col lg:flex-row gap-8">
 
                 {/* Staff List */}
-                <div className="flex-1">
+                <div id="tour-staff-list" className="flex-1">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xl font-bold flex items-center gap-2">
                             {t('staff.current_team')}
@@ -74,7 +89,7 @@ export default function StaffClient({ staffMembers, shopSlug, barbershopId }: { 
                 </div>
 
                 {/* Add New Staff Form */}
-                <div className="w-full lg:w-[380px] shrink-0">
+                <div id="tour-staff-add" className="w-full lg:w-[380px] shrink-0">
                     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 sticky top-28 shadow-sm">
                         <div className="mb-6 pb-6 border-b border-zinc-100 dark:border-zinc-800">
                             <h3 className="text-lg font-bold">{t('staff.invite_team_member')}</h3>

@@ -119,13 +119,18 @@ export default function AccountingClient({ stats }: AccountingClientProps) {
 
             {/* Global Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-black text-white dark:bg-white dark:text-black rounded-2xl p-8 shadow-lg flex flex-col justify-center items-center">
-                    <p className="text-sm font-bold tracking-widest uppercase opacity-70 mb-2">{t('accounting.net_revenue')} ({period === 'all' ? t('accounting.period_all') : period === 'today' ? t('accounting.period_today') : period === 'week' ? t('accounting.period_week') : t('accounting.period_month')})</p>
-                    <p className="text-6xl font-black">{formatCurrency(currentStats.totalRevenue, stats.currency)}</p>
+                <div className="bg-gradient-to-br from-zinc-900 to-black text-white dark:from-zinc-100 dark:to-zinc-200 dark:text-zinc-900 rounded-[1.5rem] p-8 shadow-xl shadow-black/10 dark:shadow-white/5 flex flex-col justify-center items-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20 dark:bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)]"></div>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <p className="text-sm font-bold tracking-widest uppercase opacity-70 mb-2">{t('accounting.net_revenue')} ({period === 'all' ? t('accounting.period_all') : period === 'today' ? t('accounting.period_today') : period === 'week' ? t('accounting.period_week') : t('accounting.period_month')})</p>
+                        <p className="text-6xl font-black">{formatCurrency(currentStats.totalRevenue, stats.currency)}</p>
+                    </div>
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl p-8 shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center">
-                    <p className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-2">{t('accounting.completed_services')} ({period === 'all' ? t('accounting.period_all') : period === 'today' ? t('accounting.period_today') : period === 'week' ? t('accounting.period_week') : t('accounting.period_month')})</p>
-                    <p className="text-6xl font-black">{currentStats.totalCuts}</p>
+                <div className="bg-zinc-100/50 dark:bg-zinc-900/40 rounded-[1.5rem] p-8 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 flex flex-col justify-center items-center relative overflow-hidden group">
+                    <div className="relative z-10 flex flex-col items-center">
+                        <p className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-2">{t('accounting.completed_services')} ({period === 'all' ? t('accounting.period_all') : period === 'today' ? t('accounting.period_today') : period === 'week' ? t('accounting.period_week') : t('accounting.period_month')})</p>
+                        <p className="text-6xl font-black">{currentStats.totalCuts}</p>
+                    </div>
                 </div>
             </div>
 
@@ -139,7 +144,8 @@ export default function AccountingClient({ stats }: AccountingClientProps) {
                     const progress = target > 0 ? Math.min((barber.revenue / target) * 100, 100) : 0
                     
                     return (
-                        <div key={idx} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm relative overflow-hidden group flex flex-col">
+                        <div key={idx} className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-[1.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-zinc-500/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group flex flex-col block">
+                            <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="font-bold text-lg">{barber.name}</h3>
                                 <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs px-2.5 py-1 rounded-full font-semibold">

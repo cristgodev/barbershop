@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "./providers";
-import LanguageSwitcher from "./components/LanguageSwitcher";
-import TopNavLinks from "./components/TopNavLinks";
+import GlobalHeader from "./components/GlobalHeader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,19 +35,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} antialiased min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 selection:bg-yellow-600/30 selection:text-white`}>
         <ThemeProvider>
-        <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
-          <a href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 bg-yellow-600 rounded flex items-center justify-center font-bold text-zinc-50 dark:text-zinc-950 group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.2)]">B</div>
-            <h1 className="text-xl font-bold tracking-wide font-serif text-zinc-900 dark:text-white uppercase" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Barbershop</h1>
-          </a>
-          <TopNavLinks />
-          <div className="flex items-center gap-4">
-            <LanguageSwitcher />
-            <a href="/login" className="hidden sm:inline-block bg-yellow-600 hover:bg-yellow-500 text-zinc-50 dark:text-zinc-950 px-6 py-2.5 rounded-full text-sm font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:shadow-[0_0_20px_rgba(234,179,8,0.3)]">
-              Acceso Socios
-            </a>
-          </div>
-        </header>
+          <GlobalHeader />
         <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto p-6 md:p-8">
           {children}
         </main>

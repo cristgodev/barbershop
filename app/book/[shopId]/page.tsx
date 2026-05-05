@@ -81,6 +81,7 @@ export default async function BookAppointmentPage({ params }: { params: Promise<
                 shopTimeOffs={shopTimeOffs}
                 appointments={appointments}
                 customerId={customerId}
+                returnUrl={`/book/${shop.id}`}
             />
         </div>
     )

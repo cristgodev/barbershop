@@ -19,7 +19,8 @@ export default function BookingForm({
     timeOffs,
     shopTimeOffs,
     appointments,
-    customerId
+    customerId,
+    returnUrl
 }: {
     shopId: string;
     services: Service[];
@@ -29,6 +30,7 @@ export default function BookingForm({
     shopTimeOffs: ShopTimeOff[];
     appointments?: Appointment[];
     customerId: string | null;
+    returnUrl?: string;
 }) {
     const router = useRouter()
     const { t } = useTranslation()
@@ -343,7 +345,10 @@ export default function BookingForm({
                                         <p className="text-zinc-500 text-sm mb-6 max-w-sm mx-auto">{t('booking.create_account_to_see').replace('{name}', staff.find((s: Staff) => s.id === selectedBarber)?.name || 'the professional')}</p>
                                         <button
                                             type="button"
-                                            onClick={() => router.push(`/client/login?returnUrl=/book/${shopId}`)}
+                                            onClick={() => {
+                                                const url = returnUrl || `/book/${shopId}`
+                                                router.push(`/client/login?returnUrl=${encodeURIComponent(url)}`)
+                                            }}
                                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black py-3 px-8 rounded-xl font-bold transition-all shadow-md active:scale-95"
                                         >
                                             {t('booking.signin_continue')}

@@ -11,7 +11,7 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json()
-        const { heroImageUrl, galleryUrls, name, address, phone, isCrmEnabled, isPosEnabled, isGamificationEnabled, isMarketingEnabled, isLoyaltyEnabled } = body
+        const { heroImageUrl, galleryUrls, name, address, phone, instagramUrl, tiktokUrl, currency, isCrmEnabled, isPosEnabled, isGamificationEnabled, isMarketingEnabled, isLoyaltyEnabled } = body
 
         const updatedShop = await prisma.barbershop.update({
             where: { id: session.user.barbershopId },
@@ -19,6 +19,9 @@ export async function PUT(req: Request) {
                 name: name !== undefined ? name : undefined,
                 address: address !== undefined ? address : undefined,
                 phone: phone !== undefined ? phone : undefined,
+                instagramUrl: instagramUrl !== undefined ? instagramUrl : undefined,
+                tiktokUrl: tiktokUrl !== undefined ? tiktokUrl : undefined,
+                currency: currency !== undefined ? currency : undefined,
                 heroImageUrl: heroImageUrl !== undefined ? heroImageUrl : undefined,
                 galleryUrls: galleryUrls !== undefined ? galleryUrls : undefined,
                 isCrmEnabled: isCrmEnabled !== undefined ? isCrmEnabled : undefined,

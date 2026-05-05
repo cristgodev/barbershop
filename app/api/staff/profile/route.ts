@@ -11,7 +11,7 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json()
-        const { userId, bio, avatarUrl, portfolioUrls } = body
+        const { userId, bio, instagramUrl, tiktokUrl, avatarUrl, portfolioUrls, showOnLanding } = body
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
@@ -37,8 +37,11 @@ export async function PUT(req: Request) {
             where: { id: userId },
             data: {
                 bio: bio !== undefined ? bio : undefined,
+                instagramUrl: instagramUrl !== undefined ? instagramUrl : undefined,
+                tiktokUrl: tiktokUrl !== undefined ? tiktokUrl : undefined,
                 avatarUrl: avatarUrl !== undefined ? avatarUrl : undefined,
                 portfolioUrls: portfolioUrls !== undefined ? portfolioUrls : undefined,
+                showOnLanding: showOnLanding !== undefined ? showOnLanding : undefined,
             }
         })
 
