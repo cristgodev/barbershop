@@ -4,15 +4,23 @@ import { authOptions } from "../lib/auth"
 import DashboardClient from "./DashboardClient"
 import DashboardAnalytics from "./DashboardAnalytics"
 import OverviewHeaderClient from "./OverviewHeaderClient"
+import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
     const session = await getServerSession(authOptions)
-    // We can assume session exists because layout.tsx verified it
+    
+    if (!session?.user) {
+        redirect('/login')
+    }
+
+    if (!session.user.barbershopId) {
+        redirect('/onboarding')
+    }
 
     const shop = await prisma.barbershop.findUnique({
-        where: { id: session!.user.barbershopId },
+        where: { id: session.user.barbershopId },
         include: {
             appointments: {
                 include: {
@@ -27,11 +35,15 @@ export default async function DashboardPage() {
         }
     })
 
-    const currentUser = session!.user
+    if (!shop) {
+        redirect('/onboarding')
+    }
+
+    const currentUser = session.user
 
     const staffMembers = await prisma.user.findMany({
         where: { barbershopId: session!.user.barbershopId, role: { in: ['OWNER', 'MANAGER', 'BARBER'] } },
-        select: { id: true, name: true }
+        select: { id: true, name: true, avatarUrl: true }
     })
 
     const staffIds = staffMembers.map(s => s.id)
@@ -145,7 +157,7 @@ export default async function DashboardPage() {
     })
 
     return (
-        <div className="flex flex-col gap-8 pb-12 w-full max-w-7xl mx-auto">
+        <div className="flex flex-col gap-8 pb-12 w-full max-w-[1600px] px-2 sm:px-4 mx-auto">
             
             <OverviewHeaderClient />
 
@@ -153,17 +165,15 @@ export default async function DashboardPage() {
             <DashboardAnalytics stats={stats} charts={{ today: todayChart, week: weekChart, month: monthChart }} />
 
             {/* Main Content: Full Calendar */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-xl">
-                <DashboardClient
-                    appointments={shop!.appointments}
-                    staffMembers={staffMembers}
-                    currentUserRole={currentUser.role}
-                    currentUserId={currentUser.id}
-                    schedules={schedules}
-                    timeOffs={timeOffs}
-                    shopTimeOffs={shopTimeOffs}
-                />
-            </div>
+            <DashboardClient
+                appointments={shop!.appointments}
+                staffMembers={staffMembers}
+                currentUserRole={currentUser.role}
+                currentUserId={currentUser.id}
+                schedules={schedules}
+                timeOffs={timeOffs}
+                shopTimeOffs={shopTimeOffs}
+            />
         </div>
     )
 }

@@ -48,7 +48,7 @@ export default function ClientDashboardClient({
             <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/" className="font-extrabold text-xl tracking-tight hover:opacity-70 transition-opacity">
+                        <Link href="/" className="font-extrabold text-xl tracking-tight hover:opacity-70 transition-opacity" suppressHydrationWarning>
                             BARBERSHOP
                         </Link>
                     </div>

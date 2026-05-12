@@ -154,29 +154,28 @@ export default function HomeClient({ shops }: { shops: any[] }) {
       </section>
 
       {/* 5. Cierre / Bottom CTA */}
-      <section className="w-full py-32 px-4 text-center border-t border-amber-900/30 relative overflow-hidden bg-gradient-to-b from-black to-[#130b02]">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-64 bg-amber-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+      <section className="w-full py-32 px-4 text-center border-t border-white/5 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-64 bg-yellow-600/10 blur-[120px] rounded-full pointer-events-none"></div>
         
         <div className="max-w-4xl mx-auto space-y-10 relative z-10">
-            <h2 className="text-5xl md:text-7xl font-black font-serif text-transparent bg-clip-text bg-gradient-to-br from-white to-zinc-400" style={{ fontFamily: 'var(--font-cormorant), serif' }}>El siguiente nivel te espera.</h2>
-            <p className="text-xl md:text-2xl text-amber-500/80 font-medium">Digitaliza tu negocio y colócate por encima del 90% de tu competencia local desde hoy.</p>
-            <div className="pt-6">
-                <a href="/register" className="inline-flex items-center gap-3 bg-gradient-to-b from-white to-zinc-200 text-black px-14 py-6 rounded-full font-black text-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(255,255,255,0.15)] active:scale-95 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-                Comenzar Mi Sistema
-                <span aria-hidden="true">&rarr;</span>
+            <h2 className="text-5xl md:text-7xl font-black font-serif text-white tracking-tight" style={{ fontFamily: 'var(--font-cormorant), serif' }}>El siguiente nivel te espera.</h2>
+            <p className="text-xl md:text-2xl text-zinc-400 font-light max-w-3xl mx-auto leading-relaxed">Digitaliza tu negocio y colócate por encima del <strong className="text-yellow-600 font-bold">90%</strong> de tu competencia local desde hoy.</p>
+            <div className="pt-8 flex justify-center">
+                <a href="/register" className="inline-flex items-center justify-center gap-3 bg-yellow-600 hover:bg-yellow-500 text-black px-12 py-5 rounded-full font-bold text-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(217,119,6,0.3)] active:scale-95 uppercase tracking-widest group">
+                    Comenzar Mi Sistema
+                    <span aria-hidden="true" className="text-lg group-hover:translate-x-1 transition-transform">&rarr;</span>
                 </a>
             </div>
         </div>
       </section>
 
       {/* 6. Simple SaaS Footer */}
-      <footer className="w-full bg-black text-zinc-500 py-12 text-center relative z-10">
-        <p className="text-sm font-semibold">&copy; {new Date().getFullYear()} The Barbershop SaaS. Construido para la Élite.</p>
-        <div className="mt-6 flex justify-center gap-8 text-sm">
+      <footer className="w-full text-zinc-500 py-12 text-center relative z-10 border-t border-white/5 bg-black/20 backdrop-blur-sm">
+        <p className="text-xs font-semibold tracking-widest uppercase">&copy; {new Date().getFullYear()} The Barbershop SaaS. Construido para la Élite.</p>
+        <div className="mt-8 flex justify-center gap-8 text-xs font-bold uppercase tracking-widest">
             <a href="#" className="hover:text-white transition-colors">Términos</a>
             <a href="#" className="hover:text-white transition-colors">Privacidad</a>
-            <a href="/login" className="text-amber-500/70 hover:text-amber-400 font-medium transition-colors">Portal Propietarios</a>
+            <a href="/login" className="text-yellow-600 hover:text-yellow-500 transition-colors">Portal Propietarios</a>
         </div>
       </footer>
       

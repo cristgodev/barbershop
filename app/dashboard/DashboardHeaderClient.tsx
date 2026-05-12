@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import AppTourModal from './AppTourModal';
+import { useMobileNav } from './MobileNavContext';
 
 export default function DashboardHeaderClient({ currentUser, shopSlug }: { currentUser: any, shopSlug: string | null }) {
     const { t } = useTranslation();
+    const { toggle } = useMobileNav();
     const [showTour, setShowTour] = useState(false);
 
     useEffect(() => {
@@ -17,8 +19,15 @@ export default function DashboardHeaderClient({ currentUser, shopSlug }: { curre
     }, []);
 
     return (
-        <header className="h-16 bg-white dark:bg-zinc-900/50 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-8 sticky top-0 z-30">
-            <div className="flex items-center gap-2">
+        <header className="h-16 bg-white dark:bg-zinc-900/50 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={toggle}
+                    className="md:hidden p-2 -ml-2 rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+                    aria-label="Toggle menu"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
                 <h2 className="text-xl font-bold font-serif text-zinc-900 dark:text-white" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
                     {t('dashboard.center')}
                 </h2>

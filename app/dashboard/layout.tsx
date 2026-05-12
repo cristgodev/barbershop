@@ -4,6 +4,8 @@ import { authOptions } from "../lib/auth"
 import { prisma } from "../lib/prisma"
 import DashboardNavigation from "./DashboardNavigation"
 import DashboardHeaderClient from "./DashboardHeaderClient"
+import { MobileNavProvider } from "./MobileNavContext"
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -31,23 +33,24 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950">
-      
-      {/* Sidebar Navigation */}
-      <DashboardNavigation shop={shop} />
+      <MobileNavProvider>
+        {/* Sidebar Navigation */}
+        <DashboardNavigation shop={shop} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        
-        {/* TopBar */}
-        <DashboardHeaderClient currentUser={currentUser} shopSlug={shop.slug} />
-        
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-screen relative w-full">
+          
+          {/* TopBar */}
+          <DashboardHeaderClient currentUser={currentUser} shopSlug={shop.slug} />
+          
 
-        {/* Page Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          {children}
-        </main>
-        
-      </div>
+          {/* Page Content */}
+          <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
+            {children}
+          </main>
+          
+        </div>
+      </MobileNavProvider>
     </div>
   )
 }

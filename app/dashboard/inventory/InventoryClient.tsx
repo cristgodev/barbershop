@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PlusIcon, AdjustmentsHorizontalIcon, ArrowPathIcon, CheckCircleIcon, PhotoIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, AdjustmentsHorizontalIcon, ArrowPathIcon, CheckCircleIcon, PhotoIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { formatCurrency } from '../../lib/currency'
 
 type Product = {
@@ -18,8 +18,32 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
     const [products, setProducts] = useState<Product[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isAdding, setIsAdding] = useState(false)
+    const [editingProductId, setEditingProductId] = useState<string | null>(null)
     
     const [formData, setFormData] = useState({ name: '', description: '', price: '', stock: '', sku: '' })
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [isUploading, setIsUploading] = useState(false)
+
+    const resetForm = () => {
+        setFormData({ name: '', description: '', price: '', stock: '', sku: '' })
+        setImageFile(null)
+        setEditingProductId(null)
+        setIsAdding(false)
+    }
+
+    const openEditForm = (product: Product) => {
+        setFormData({
+            name: product.name,
+            description: product.description || '',
+            price: product.price.toString(),
+            stock: product.stock.toString(),
+            sku: product.sku || ''
+        })
+        setImageFile(null)
+        setEditingProductId(product.id)
+        setIsAdding(true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     useEffect(() => {
         fetchProducts()
@@ -41,20 +65,46 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setIsUploading(true)
         try {
-            const res = await fetch('/api/products', {
-                method: 'POST',
+            let imageUrl = null
+
+            // Upload image first if exists
+            if (imageFile) {
+                const uploadData = new FormData()
+                uploadData.append('file', imageFile)
+                const uploadRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: uploadData
+                })
+                const uploadJson = await uploadRes.json()
+                if (uploadJson.success && uploadJson.files.length > 0) {
+                    imageUrl = uploadJson.files[0].url
+                }
+            }
+
+            // Create or Update product with imageUrl
+            const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products'
+            const method = editingProductId ? 'PUT' : 'POST'
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, imageUrl: imageUrl || undefined }) // only update image if provided
             })
             const data = await res.json()
             if (data.success) {
-                setProducts([...products, data.product])
-                setIsAdding(false)
-                setFormData({ name: '', description: '', price: '', stock: '', sku: '' })
+                if (editingProductId) {
+                    setProducts(products.map(p => p.id === editingProductId ? data.product : p))
+                } else {
+                    setProducts([...products, data.product])
+                }
+                resetForm()
             }
         } catch (error) {
-            console.error('Failed to create product', error)
+            console.error('Failed to save product', error)
+        } finally {
+            setIsUploading(false)
         }
     }
 
@@ -107,7 +157,13 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
                 </div>
                 
                 <button
-                    onClick={() => setIsAdding(!isAdding)}
+                    onClick={() => {
+                        if (isAdding) {
+                            resetForm()
+                        } else {
+                            setIsAdding(true)
+                        }
+                    }}
                     className="bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black font-bold py-3 px-6 rounded-xl transition-all shadow-md shrink-0"
                 >
                     {isAdding ? 'Cancelar' : '+ Nuevo Producto'}
@@ -116,7 +172,7 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
 
             {isAdding && (
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-sm mb-8 animate-in fade-in slide-in-from-top-4">
-                    <h2 className="text-xl font-bold mb-6">Añadir Nuevo Producto</h2>
+                    <h2 className="text-xl font-bold mb-6">{editingProductId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1">
@@ -139,10 +195,35 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
                                 <label className="text-sm font-semibold">Descripción</label>
                                 <input type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-zinc-100 dark:bg-zinc-950 border-transparent rounded-xl px-4 py-3 text-sm focus:ring-0 focus:border-yellow-600" />
                             </div>
+                            <div className="space-y-2 md:col-span-2 mt-2">
+                                <label className="text-sm font-semibold">Fotografía del Producto (Opcional)</label>
+                                <div className="flex items-center gap-4">
+                                    <label className="cursor-pointer bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors border border-dashed border-zinc-300 dark:border-zinc-600 flex items-center gap-2">
+                                        <PhotoIcon className="w-5 h-5" />
+                                        <span>Seleccionar Imagen</span>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            className="hidden" 
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files.length > 0) {
+                                                    setImageFile(e.target.files[0])
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                    {imageFile && (
+                                        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                            <CheckCircleIcon className="w-5 h-5" />
+                                            {imageFile.name}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                         <div className="pt-4 flex justify-end">
-                            <button type="submit" className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md">
-                                Guardar Producto
+                            <button disabled={isUploading} type="submit" className="bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md">
+                                {isUploading ? 'Guardando...' : 'Guardar Producto'}
                             </button>
                         </div>
                     </form>
@@ -150,7 +231,7 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
             )}
 
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto w-full">
                     <table className="w-full text-left text-sm whitespace-nowrap">
                         <thead className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 font-medium">
                             <tr>
@@ -165,9 +246,18 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
                             {products.length > 0 ? (
                                 products.map((product) => (
                                     <tr key={product.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                        <td className="px-6 py-4 font-bold">
-                                            {product.name}
-                                            {product.description && <p className="text-xs text-zinc-500 font-normal mt-0.5">{product.description}</p>}
+                                        <td className="px-6 py-4 font-bold flex items-center gap-3">
+                                            {product.imageUrl ? (
+                                                <img src={product.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-800" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-200 dark:border-zinc-800">
+                                                    <PhotoIcon className="w-5 h-5 opacity-50" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <span className="block">{product.name}</span>
+                                                {product.description && <p className="text-xs text-zinc-500 font-normal mt-0.5 truncate max-w-[200px]">{product.description}</p>}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-center text-zinc-500 font-mono text-xs">{product.sku || 'N/A'}</td>
                                         <td className="px-6 py-4 text-center font-bold font-serif text-lg text-yellow-600">{formatCurrency(product.price, shopCurrency)}</td>
@@ -179,9 +269,14 @@ export default function InventoryClient({ shopCurrency }: { shopCurrency: string
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button onClick={() => deleteProduct(product.id, product.name)} className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
-                                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button onClick={() => openEditForm(product)} className="text-blue-500 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors" title="Editar Producto">
+                                                    <PencilSquareIcon className="w-5 h-5" />
+                                                </button>
+                                                <button onClick={() => deleteProduct(product.id, product.name)} className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Eliminar Producto">
+                                                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

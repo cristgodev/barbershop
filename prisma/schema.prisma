@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
@@ -12,174 +9,138 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  phone         String?
-  role          String    @default("CUSTOMER")
-  
-  // Profile Customization
-  bio           String?
-  avatarUrl     String?
-  portfolioUrls String?   // Comma-separated list of image URLs
-  instagramUrl  String?
-  tiktokUrl     String?
-  showOnLanding Boolean   @default(true)
-
-  // Relations
-  accounts      Account[]
-  
-  barbershopId  String?
-  barbershop    Barbershop? @relation("StaffToShop", fields: [barbershopId], references: [id])
-  
-  appointmentsAsCustomer Appointment[] @relation("CustomerAppointments")
+  id                     String        @id @default(cuid())
+  name                   String?
+  email                  String        @unique
+  passwordHash           String?
+  phone                  String?
+  role                   String        @default("CUSTOMER")
+  bio                    String?
+  avatarUrl              String?
+  portfolioUrls          String?
+  barbershopId           String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  emailVerified          DateTime?
+  image                  String?
+  loyaltyPoints          Int           @default(0)
+  noShowCount            Int           @default(0)
+  instagramUrl           String?
+  tiktokUrl              String?
+  showOnLanding          Boolean       @default(true)
+  accounts               Account[]
   appointmentsAsBarber   Appointment[] @relation("BarberAppointments")
-
-  schedules     Schedule[]
-  timeOffs      TimeOff[]
-
-  clientNotes    ClientNote[] @relation("CustomerNotes")
-  notesWritten   ClientNote[] @relation("BarberNotes")
-  staffGoals     StaffGoal[]
-  salesMade      Sale[]       @relation("BarberSales")
-  purchases      Sale[]       @relation("CustomerPurchases")
-
-  // Client Metrics
-  loyaltyPoints  Int          @default(0)
-  noShowCount    Int          @default(0)
-
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  appointmentsAsCustomer Appointment[] @relation("CustomerAppointments")
+  notesWritten           ClientNote[]  @relation("BarberNotes")
+  clientNotes            ClientNote[]  @relation("CustomerNotes")
+  salesMade              Sale[]        @relation("BarberSales")
+  purchases              Sale[]        @relation("CustomerPurchases")
+  schedules              Schedule[]
+  staffGoals             StaffGoal[]
+  timeOffs               TimeOff[]
+  barbershop             Barbershop?   @relation("StaffToShop", fields: [barbershopId], references: [id])
 }
 
 model Barbershop {
-  id          String   @id @default(cuid())
-  slug        String?  @unique @default(uuid())
-  name        String
-  address     String?
-  phone       String?
-  
-  // Customization
-  heroImageUrl  String?
-  galleryUrls   String?   // Comma-separated list of image URLs
-  instagramUrl  String?
-  tiktokUrl     String?
-  
-  // Relations
-  staff       User[]   @relation("StaffToShop")
-  services    Service[]
-  appointments Appointment[]
-  timeOffs    ShopTimeOff[]
-  clientNotes ClientNote[]
-  staffGoals  StaffGoal[]
-  products    Product[]
-  sales       Sale[]
-
-  // Feature Flags (App Modules)
-  isCrmEnabled          Boolean @default(false)
-  isPosEnabled          Boolean @default(false)
-  isGamificationEnabled Boolean @default(true)
-  isMarketingEnabled    Boolean @default(false)
-  isLoyaltyEnabled      Boolean @default(false)
-
-  // Regional/Localization
-  currency              String  @default("USD")
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String        @id @default(cuid())
+  slug                  String?       @unique @default(uuid())
+  name                  String
+  address               String?
+  phone                 String?
+  heroImageUrl          String?
+  galleryUrls           String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  isCrmEnabled          Boolean       @default(false)
+  isGamificationEnabled Boolean       @default(true)
+  isLoyaltyEnabled      Boolean       @default(false)
+  isMarketingEnabled    Boolean       @default(false)
+  isPosEnabled          Boolean       @default(false)
+  currency              String        @default("USD")
+  instagramUrl          String?
+  tiktokUrl             String?
+  appointments          Appointment[]
+  clientNotes           ClientNote[]
+  products              Product[]
+  sales                 Sale[]
+  services              Service[]
+  timeOffs              ShopTimeOff[]
+  staffGoals            StaffGoal[]
+  staff                 User[]        @relation("StaffToShop")
 }
 
 model Service {
-  id           String     @id @default(cuid())
+  id           String        @id @default(cuid())
   name         String
   description  String?
   price        Float
-  durationMins Int        // e.g. 30, 45, 60
-
-  // Relations
+  durationMins Int
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   appointments Appointment[]
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  barbershop   Barbershop    @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
-  id           String            @id @default(cuid())
+  id           String     @id @default(cuid())
   date         DateTime
   startTime    DateTime
   endTime      DateTime
   status       String     @default("PENDING")
-
-  // Relations
   customerId   String
-  customer     User       @relation("CustomerAppointments", fields: [customerId], references: [id])
-  
   barberId     String
-  barber       User       @relation("BarberAppointments", fields: [barberId], references: [id])
-  
   serviceId    String
-  service      Service    @relation(fields: [serviceId], references: [id])
-  
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
-
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  barber       User       @relation("BarberAppointments", fields: [barberId], references: [id])
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+  customer     User       @relation("CustomerAppointments", fields: [customerId], references: [id])
+  service      Service    @relation(fields: [serviceId], references: [id])
 }
 
 model Schedule {
-  id           String     @id @default(cuid())
+  id           String   @id @default(cuid())
   barberId     String
-  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  
-  dayOfWeek    Int        // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  startTime    String     // Format HH:mm (e.g., "09:00")
-  endTime      String     // Format HH:mm (e.g., "18:00")
-  isWorkingDay Boolean    @default(true) // If false, the barber does not work on this day
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  isWorkingDay Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  barber       User     @relation(fields: [barberId], references: [id], onDelete: Cascade)
 
   @@unique([barberId, dayOfWeek])
 }
 
 model TimeOff {
-  id           String     @id @default(cuid())
-  barberId     String
-  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
-
-  date         DateTime   // Specific date they have taken off
-  reason       String?    // E.g., Vacation, Sick leave, Personal
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  barberId  String
+  date      DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  barber    User     @relation(fields: [barberId], references: [id], onDelete: Cascade)
 
   @@unique([barberId, date])
 }
@@ -187,101 +148,81 @@ model TimeOff {
 model ShopTimeOff {
   id           String     @id @default(cuid())
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-
-  date         DateTime   // Specific date the entire shop is closed
-  reason       String?    // E.g., National holiday, Renovation
-
+  date         DateTime
+  reason       String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 
   @@unique([barbershopId, date])
 }
 
 model ClientNote {
   id           String     @id @default(cuid())
-  content      String     @db.Text
-  
+  content      String
   customerId   String
-  customer     User       @relation("CustomerNotes", fields: [customerId], references: [id], onDelete: Cascade)
-  
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-  
   authorId     String?
-  author       User?      @relation("BarberNotes", fields: [authorId], references: [id], onDelete: SetNull)
-
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  author       User?      @relation("BarberNotes", fields: [authorId], references: [id])
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  customer     User       @relation("CustomerNotes", fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 model StaffGoal {
   id           String     @id @default(cuid())
-  
   barberId     String
-  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-  
-  month        Int        // 1-12
-  year         Int        // e.g., 2024
-  targetAmount Float      // The revenue goal for the month
-  
+  month        Int
+  year         Int
+  targetAmount Float
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  
+  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
   @@unique([barberId, month, year])
 }
 
 model Product {
   id           String     @id @default(cuid())
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-  
   name         String
   description  String?
   price        Float
   stock        Int        @default(0)
   sku          String?
   imageUrl     String?
-
-  saleItems    SaleItem[]
-
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  saleItems    SaleItem[]
 }
 
 model Sale {
-  id           String     @id @default(cuid())
-  barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-  
-  barberId     String
-  barber       User       @relation("BarberSales", fields: [barberId], references: [id])
-  
-  customerId   String?
-  customer     User?      @relation("CustomerPurchases", fields: [customerId], references: [id], onDelete: SetNull)
-
-  items        SaleItem[]
-  totalAmount  Float
-  paymentMethod String     @default("CASH") // CASH, CARD, OTHER
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id            String     @id @default(cuid())
+  barbershopId  String
+  barberId      String
+  customerId    String?
+  totalAmount   Float
+  paymentMethod String     @default("CASH")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  barber        User       @relation("BarberSales", fields: [barberId], references: [id])
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  customer      User?      @relation("CustomerPurchases", fields: [customerId], references: [id])
+  items         SaleItem[]
 }
 
 model SaleItem {
-  id           String     @id @default(cuid())
-  saleId       String
-  sale         Sale       @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  
-  productId    String
-  product      Product    @relation(fields: [productId], references: [id])
-  
-  quantity     Int
-  priceAtSale  Float
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String   @id @default(cuid())
+  saleId      String
+  productId   String
+  quantity    Int
+  priceAtSale Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  product     Product  @relation(fields: [productId], references: [id])
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
 }

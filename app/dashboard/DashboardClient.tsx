@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import multiMonthPlugin from '@fullcalendar/multimonth'
 import interactionPlugin from '@fullcalendar/interaction'
+import listPlugin from '@fullcalendar/list'
 import { useTranslation } from '../contexts/LanguageContext'
 import PageTour from './PageTour'
 
@@ -24,6 +25,7 @@ type Appointment = {
 type Staff = {
     id: string;
     name: string | null;
+    avatarUrl?: string | null;
 }
 
 type Schedule = {
@@ -72,6 +74,24 @@ export default function DashboardClient({
     const [isNoShowing, setIsNoShowing] = useState<string | null>(null)
     const [isCompleting, setIsCompleting] = useState<string | null>(null)
     const [selectedApt, setSelectedApt] = useState<{ id: string, title: string, barberName: string, status: string } | null>(null)
+
+    // Calendar Custom Navigation State
+    const calendarRef = useRef<any>(null)
+    const [currentView, setCurrentView] = useState('listWeek')
+    const [currentDateTitle, setCurrentDateTitle] = useState('')
+
+    const changeView = (viewName: string) => {
+        const api = calendarRef.current?.getApi()
+        if (api) {
+            api.changeView(viewName)
+            setCurrentView(viewName)
+        }
+    }
+
+    const handleDatesSet = (arg: any) => {
+        setCurrentDateTitle(arg.view.title)
+        setCurrentView(arg.view.type)
+    }
 
     const filteredAppointments = appointments.filter(apt => {
         if (selectedBarberId === 'ALL') return true
@@ -132,12 +152,13 @@ export default function DashboardClient({
                 extendedProps: {
                     status: apt.status,
                     barberName: apt.barber.name,
+                    avatarUrl: staffMembers.find(s => s.id === apt.barber.id)?.avatarUrl,
                     isCancelling: isCancelling === apt.id,
                     isCompleting: isCompleting === apt.id,
                     type: 'appointment'
                 },
-                backgroundColor: apt.status === 'COMPLETED' ? '#22c55e' : apt.status === 'CONFIRMED' ? '#10b981' : '#27272a',
-                borderColor: apt.status === 'COMPLETED' ? '#16a34a' : apt.status === 'CONFIRMED' ? '#059669' : '#18181b',
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
             }))
     ]
 
@@ -248,6 +269,112 @@ export default function DashboardClient({
         }
     }
 
+    const handleEventDropOrResize = async (changeInfo: any) => {
+        const { event, revert } = changeInfo
+        const { type } = event.extendedProps
+
+        if (type !== 'appointment') {
+            revert()
+            return
+        }
+
+        try {
+            const res = await fetch('/api/appointments/reschedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    appointmentId: event.id,
+                    startTime: event.start.toISOString(),
+                    endTime: event.end.toISOString()
+                })
+            })
+
+            if (!res.ok) {
+                const errorData = await res.json()
+                alert(errorData.error || 'Failed to reschedule')
+                revert()
+                return
+            }
+
+            router.refresh()
+        } catch (error) {
+            console.error('Reschedule error:', error)
+            alert('Failed to reschedule appointment')
+            revert()
+        }
+    }
+
+    const renderEventContent = (eventInfo: any) => {
+        const { status, barberName, avatarUrl, type } = eventInfo.event.extendedProps;
+        const isPast = new Date(eventInfo.event.end) < new Date();
+        const opacityClass = isPast && type === 'appointment' ? 'opacity-60 hover:opacity-100' : 'opacity-100';
+
+        if (eventInfo.view.type.includes('list')) {
+            return (
+                <div className={`flex items-center gap-3 w-full py-1 ${opacityClass}`}>
+                    {type === 'appointment' ? (
+                        <>
+                            <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 border border-black/10 dark:border-white/10 shadow-sm">
+                                {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="" /> : (barberName ? barberName.charAt(0).toUpperCase() : 'U')}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-bold text-sm leading-tight text-zinc-900 dark:text-zinc-100">{eventInfo.event.title.split(' - ')[0]}</span>
+                                <span className="text-xs text-zinc-500 font-medium">{eventInfo.event.title.split(' - ')[1]} • {barberName}</span>
+                            </div>
+                            <div className="ml-auto hidden sm:flex items-center">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                                    status === 'COMPLETED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                    status === 'CONFIRMED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                    'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
+                                }`}>{status}</span>
+                            </div>
+                        </>
+                    ) : (
+                         <span className="font-bold text-xs uppercase tracking-widest px-2 text-red-500">{eventInfo.event.title}</span>
+                    )}
+                </div>
+            )
+        }
+        
+        if (type === 'timeoff' || type === 'shoptimeoff') {
+            return (
+                <div className="flex items-center justify-center h-full w-full opacity-80">
+                    <span className="font-bold text-xs uppercase tracking-widest text-center px-1">{eventInfo.event.title}</span>
+                </div>
+            )
+        }
+
+        if (type === 'appointment') {
+            const isCompleted = status === 'COMPLETED';
+            const isConfirmed = status === 'CONFIRMED';
+            
+            const bgClass = isCompleted 
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 border-l-emerald-500' 
+                : isConfirmed 
+                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 border-l-blue-500' 
+                : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-900 dark:text-zinc-100 border-l-zinc-500';
+
+            return (
+                <div className={`flex flex-col p-1 h-full w-full rounded border-l-[3px] border-zinc-200 dark:border-zinc-700/50 overflow-hidden transition-all hover:bg-white dark:hover:bg-zinc-800 ${bgClass} ${opacityClass}`}>
+                    <div className="flex items-start gap-1 w-full">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} className="w-3.5 h-3.5 rounded-full object-cover shrink-0 mt-0.5 opacity-90" alt="" />
+                        ) : (
+                            <div className="w-3.5 h-3.5 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center text-[7px] font-bold shrink-0 mt-0.5">
+                                {barberName ? barberName.charAt(0).toUpperCase() : 'U'}
+                            </div>
+                        )}
+                        <div className="flex flex-col min-w-0 flex-1 leading-[1.1]">
+                            <span className="font-bold text-[10px] sm:text-xs truncate">{eventInfo.timeText} • {eventInfo.event.title.split(' - ')[0]}</span>
+                            <span className="text-[9px] sm:text-[10px] opacity-75 truncate">{eventInfo.event.title.split(' - ')[1]}</span>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+        return <div className="p-1 text-xs">{eventInfo.event.title}</div>;
+    }
+
     return (
         <div className="space-y-6 relative">
             <PageTour 
@@ -269,20 +396,30 @@ export default function DashboardClient({
 
                 <div className="flex flex-wrap items-center gap-3">
                     {currentUserRole === 'OWNER' && staffMembers.length > 1 && (
-                        <>
-                            <span className="text-sm font-medium text-zinc-500 hidden sm:block">{t('dashboard.view_barber_agenda')}</span>
-                            <select
-                                id="tour-cal-filter"
-                                value={selectedBarberId}
-                                onChange={(e) => setSelectedBarberId(e.target.value)}
-                                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white font-medium"
+                        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar py-1" id="tour-cal-filter">
+                            <button
+                                onClick={() => setSelectedBarberId('ALL')}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition-all whitespace-nowrap border-2 ${selectedBarberId === 'ALL' ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'}`}
                             >
-                                <option value="ALL">{t('dashboard.all_barbers')}</option>
-                                {staffMembers.map(staff => (
-                                    <option key={staff.id} value={staff.id}>{staff.name}</option>
-                                ))}
-                            </select>
-                        </>
+                                {t('dashboard.all_barbers')}
+                            </button>
+                            {staffMembers.map(staff => (
+                                <button
+                                    key={staff.id}
+                                    onClick={() => setSelectedBarberId(staff.id)}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition-all whitespace-nowrap border-2 ${selectedBarberId === staff.id ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-800 text-black dark:text-white shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm'}`}
+                                >
+                                    {staff.avatarUrl ? (
+                                        <img src={staff.avatarUrl} className="w-5 h-5 rounded-full object-cover shadow-sm" />
+                                    ) : (
+                                        <div className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
+                                            {staff.name?.charAt(0)}
+                                        </div>
+                                    )}
+                                    {staff.name?.split(' ')[0]}
+                                </button>
+                            ))}
+                        </div>
                     )}
                     
                     <a 
@@ -298,154 +435,176 @@ export default function DashboardClient({
                 </div>
             </div>
 
-            <div id="tour-cal-grid" className="relative w-full">
-                <style>{`
-                    /* General Overrides */
-                    .fc { font-family: inherit; }
-                    .fc-toolbar-title { font-weight: 800 !important; font-size: 2rem !important; letter-spacing: -0.025em; color: #18181b; font-family: var(--font-cormorant), serif !important; }
-                    
-                    /* Links (Fixes invisible months in Year view & day numbers) */
-                    .fc a { color: inherit !important; text-decoration: none !important; }
+            <div className="bg-white dark:bg-zinc-900/40 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] rounded-3xl p-4 sm:p-6 mb-8 transition-all relative overflow-hidden">
+                {/* Abstract Glass Background glow */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-yellow-500/5 dark:bg-yellow-500/10 blur-3xl pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-500/5 dark:bg-blue-500/10 blur-3xl pointer-events-none"></div>
 
-                    /* Backgrounds & Borders blending with Page */
-                    .fc-theme-standard .fc-scrollgrid { border: none !important; }
-                    .fc-theme-standard th { border: none !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; padding: 4px 0 !important; background: transparent !important; }
-                    .fc-theme-standard td { border: 1px solid rgba(0,0,0,0.04) !important; }
+                {/* Custom Tailwind Toolbar */}
+                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 relative z-10">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <button 
+                            onClick={() => calendarRef.current?.getApi().today()}
+                            className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-xl font-bold text-sm transition-all shadow-sm"
+                        >
+                            Hoy
+                        </button>
+                        <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1 shadow-sm">
+                            <button onClick={() => calendarRef.current?.getApi().prev()} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-all">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button onClick={() => calendarRef.current?.getApi().next()} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-all">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                        <h2 className="text-xl sm:text-2xl font-bold font-serif ml-2 min-w-[150px] truncate text-zinc-900 dark:text-white capitalize" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
+                            {currentDateTitle}
+                        </h2>
+                    </div>
 
-                    /* Extra Space for Toolbar */
-                    .fc-header-toolbar { margin-bottom: 2rem !important; }
-                    
-                    /* Buttons (macOS / SaaS Style) */
-                    .fc .fc-button-primary {
-                        background-color: transparent !important;
-                        border: 1px solid rgba(0,0,0,0.1) !important;
-                        color: #52525b !important;
-                        font-weight: 600 !important;
-                        text-transform: capitalize !important;
-                        box-shadow: none !important;
-                        border-radius: 8px;
-                        padding: 0.4rem 1rem;
-                        transition: all 0.2s ease;
-                    }
-                    .fc .fc-button-primary:hover {
-                        background-color: rgba(0,0,0,0.05) !important;
-                        color: #18181b !important;
-                    }
-                    .fc .fc-button-active {
-                        background-color: #18181b !important;
-                        border-color: #18181b !important;
-                        color: #ffffff !important;
-                    }
-                    
-                    /* Header Cells */
-                    /* Force background to transparent for the actual inner cell container too */
-                    .fc .fc-col-header-cell { background: transparent !important; }
-                    .fc-col-header-cell-cushion { padding: 8px 4px !important; color: #18181b !important; font-weight: 700 !important; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; text-decoration: none !important; width: 100%; display: inline-block; }
-                    .fc-col-header-cell-cushion:hover { color: #18181b !important; text-decoration: none !important; }
-                    
-                    /* Day numbers (Month view) */
-                    .fc-daygrid-day-number { font-size: 0.8rem; font-weight: 500; color: #52525b; padding: 8px !important; }
+                    <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded-xl shadow-inner w-full md:w-auto overflow-x-auto hide-scrollbar">
+                        <button onClick={() => changeView('listDay')} className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${currentView === 'listDay' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Día (Lista)</button>
+                        <button onClick={() => changeView('listWeek')} className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${currentView === 'listWeek' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Semana (Lista)</button>
+                        <button onClick={() => changeView('timeGridWeek')} className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${currentView === 'timeGridWeek' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Cuadrícula</button>
+                    </div>
+                </div>
 
-                    /* Events */
-                    .fc-event { 
-                        cursor: pointer; 
-                        border-radius: 6px !important; 
-                        padding: 2px 6px; 
-                        border: none !important; 
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        transition: transform 0.1s ease;
-                    }
-                    .fc-event:hover { transform: scale(1.02); z-index: 10 !important; }
-                    .fc-v-event .fc-event-main { color: white; }
-                    .fc-event-title { font-weight: 700; font-size: 0.85rem; letter-spacing: -0.01em; }
-                    .fc-event-time { font-size: 0.70rem; opacity: 0.9; margin-bottom: 3px; font-weight: 600; }
-                    
-                    /* Time Axis (Left column) */
-                    .fc-timegrid-slot-label { font-size: 0.75rem; color: #a1a1aa; font-weight: 500; }
-                    .fc-timegrid-axis { border: none !important; }
-                    
-                    /* Now Indicator */
-                    .fc-now-indicator-line { border-color: #ef4444 !important; border-width: 2px !important; }
-                    .fc-now-indicator-arrow { border-color: #ef4444 !important; border-width: 5px !important; }
-
-                    /* Background Events (Recurring non-working days) */
-                    .fc-bg-event { opacity: 0.1 !important; }
-
-                    /* Multi-Month Year View */
-                    .fc-multimonth { border: none !important; margin-top: 1rem; }
-                    .fc-multimonth-month { padding: 0.5rem; }
-                    
-                    /* The Absolute Fix for Year View Titles */
-                    div.fc-multimonth-title, 
-                    div.fc-multimonth-title a, 
-                    div.fc-multimonth-title span { 
-                        font-size: 1.1rem !important; 
-                        font-weight: 700 !important; 
-                        color: #18181b !important; 
-                        margin-bottom: 0.8rem !important; 
-                        text-decoration: none !important; 
-                        display: block;
-                    }
-                    
-                    .fc-multimonth-daygrid { border: none !important; background: transparent !important; }
-                    .fc-multimonth-daygrid td { border: none !important; background: transparent !important; }
-                    
-                    /* Today Highlight */
-                    .fc .fc-day-today { background-color: rgba(0,0,0,0.03) !important; }
-
-                    /* ===== DARK MODE MEDIA QUERY ===== */
-                    @media (prefers-color-scheme: dark) {
-                        .fc-toolbar-title { color: #ffffff !important; font-family: var(--font-cormorant), serif !important; }
+                <div id="tour-cal-grid" className="relative w-full z-10">
+                    <style>{`
+                        /* General Overrides */
+                        .fc { font-family: inherit; }
                         
-                        .fc-theme-standard th { border-bottom: 1px solid rgba(255,255,255,0.08) !important; background: transparent !important; }
-                        .fc-theme-standard td { border: 1px solid rgba(255,255,255,0.04) !important; background: transparent !important; }
-
-                        .fc .fc-button-primary { border-color: rgba(255,255,255,0.1) !important; color: #a1a1aa !important; }
-                        .fc .fc-button-primary:hover { background-color: rgba(255,255,255,0.05) !important; color: #ffffff !important; }
-                        .fc .fc-button-active { background-color: #ffffff !important; border-color: #ffffff !important; color: #18181b !important; }
-
-                        .fc-col-header-cell-cushion { color: #f4f4f5 !important; }
-                        .fc-col-header-cell-cushion:hover { color: #ffffff !important; }
+                        /* Hide Default Header completely since we built a custom one */
+                        .fc-header-toolbar { display: none !important; }
                         
-                        .fc-daygrid-day-number { color: #a1a1aa !important; }
-                        
-                        .fc-bg-event { opacity: 0.2 !important; }
+                        /* Backgrounds & Borders blending with Page */
+                        .fc-theme-standard .fc-scrollgrid { border: none !important; }
+                        .fc-theme-standard th { border: none !important; border-bottom: 1px solid rgba(0,0,0,0.03) !important; padding: 12px 0 !important; background: transparent !important; }
+                        .fc-theme-standard td { border: none !important; } /* REMOVED VERTICAL BORDERS */
 
-                        div.fc-multimonth-title, 
-                        div.fc-multimonth-title a, 
-                        div.fc-multimonth-title span { 
-                            color: #ffffff !important; 
+                        /* Header Cells */
+                        .fc .fc-col-header-cell { background: transparent !important; }
+                        .fc-col-header-cell-cushion { padding: 4px 8px !important; color: #52525b !important; font-weight: 800 !important; font-size: 0.85rem; letter-spacing: 0.05em; text-decoration: none !important; text-transform: capitalize; }
+                        
+                        /* Today column header highlight */
+                        .fc-day-today .fc-col-header-cell-cushion { 
+                            color: #18181b !important; 
+                            background-color: rgba(0,0,0,0.05);
+                            border-radius: 8px;
                         }
 
-                        .fc .fc-day-today { background-color: rgba(255,255,255,0.04) !important; }
-                        .fc-theme-standard .fc-scrollgrid { background: transparent !important; }
-                    }
-                `}</style>
-                <FullCalendar
-                    plugins={[timeGridPlugin, dayGridPlugin, multiMonthPlugin, interactionPlugin]}
-                    initialView="timeGridWeek"
-                    headerToolbar={{
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay'
-                    }}
-                    views={{
-                        multiMonthYear: { buttonText: 'Year' },
-                        dayGridMonth: { buttonText: 'Month' },
-                        timeGridWeek: { buttonText: 'Week' },
-                        timeGridDay: { buttonText: 'Day' }
-                    }}
-                    locale={locale}
-                    events={calendarEvents}
-                    eventClick={handleEventClick}
-                    slotMinTime="07:00:00"
-                    slotMaxTime="22:00:00"
-                    allDaySlot={false}
-                    height="auto"
-                    expandRows={true}
-                    slotDuration="00:30:00"
-                    nowIndicator={true}
-                />
+                        /* Day numbers (Month view) */
+                        .fc-daygrid-day-number { font-size: 0.85rem; font-weight: 700; color: #52525b; padding: 12px !important; text-decoration: none !important; }
+                        .fc-day-today .fc-daygrid-day-number { color: #ffffff !important; background-color: #18181b; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin: 4px; padding: 0 !important; }
+
+                        /* Events base */
+                        .fc-event { 
+                            cursor: pointer; 
+                            background: transparent !important;
+                            border: none !important;
+                            border-radius: 4px !important;
+                            padding: 1px !important; /* Visual spacing */
+                        }
+                        /* We remove default internal paddings because our React component handles it */
+                        .fc-v-event .fc-event-main, .fc-h-event .fc-event-main { padding: 0 !important; color: inherit; height: 100%; }
+                        
+                        /* Time Axis (Left column) */
+                        .fc-timegrid-slot-label { font-size: 0.75rem; color: #a1a1aa; font-weight: 600; padding-right: 8px !important; }
+                        .fc-timegrid-axis { border: none !important; }
+                        .fc-timegrid-slot-lane { border-bottom: 1px solid rgba(0,0,0,0.03) !important; } /* KEEP HORIZONTAL LINES VERY SUBTLE */
+                        
+                        /* Now Indicator with glow */
+                        .fc-now-indicator-line { border-color: #ef4444 !important; border-width: 2px !important; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+                        .fc-now-indicator-arrow { border-color: #ef4444 !important; border-width: 6px !important; background: #ef4444; border-radius: 50%; transform: translate(-3px, -3px); }
+
+                        /* Background Events (Recurring non-working days) - Striped Pattern */
+                        .fc-bg-event { 
+                            opacity: 1 !important; 
+                            background: repeating-linear-gradient(
+                                45deg,
+                                rgba(0, 0, 0, 0.02),
+                                rgba(0, 0, 0, 0.02) 10px,
+                                rgba(0, 0, 0, 0.04) 10px,
+                                rgba(0, 0, 0, 0.04) 20px
+                            ) !important;
+                        }
+
+                        /* Multi-Month Year View */
+                        .fc-multimonth { border: none !important; margin-top: 1rem; }
+                        .fc-multimonth-month { padding: 0.5rem; }
+                        div.fc-multimonth-title { font-size: 1.2rem !important; font-weight: 800 !important; font-family: var(--font-cormorant), serif !important; color: #18181b !important; margin-bottom: 1rem !important; text-align: center; }
+                        .fc-multimonth-daygrid { border: none !important; background: transparent !important; }
+                        .fc-multimonth-daygrid td { border: none !important; background: transparent !important; }
+                        
+                        /* Today Highlight */
+                        .fc .fc-day-today { background-color: rgba(250,204,21,0.03) !important; } /* Subtle yellow tint */
+
+                        /* ===== DARK MODE MEDIA QUERY ===== */
+                        @media (prefers-color-scheme: dark) {
+                            .fc-theme-standard th { border-bottom: 1px solid rgba(255,255,255,0.03) !important; }
+                            .fc-theme-standard td { border: none !important; }
+                            .fc-timegrid-slot-lane { border-bottom: 1px solid rgba(255,255,255,0.03) !important; }
+
+                            .fc-col-header-cell-cushion { color: #a1a1aa !important; }
+                            .fc-day-today .fc-col-header-cell-cushion { color: #ffffff !important; background-color: rgba(255,255,255,0.1); }
+                            
+                            .fc-daygrid-day-number { color: #a1a1aa !important; }
+                            .fc-day-today .fc-daygrid-day-number { color: #18181b !important; background-color: #ffffff; }
+                            
+                            .fc-bg-event { 
+                                background: repeating-linear-gradient(
+                                    45deg,
+                                    rgba(255, 255, 255, 0.01),
+                                    rgba(255, 255, 255, 0.01) 10px,
+                                    rgba(255, 255, 255, 0.03) 10px,
+                                    rgba(255, 255, 255, 0.03) 20px
+                                ) !important;
+                            }
+
+                            div.fc-multimonth-title { color: #ffffff !important; }
+                            .fc .fc-day-today { background-color: rgba(255,255,255,0.02) !important; }
+
+                            /* List View Dark Mode */
+                            .fc-list-day-cushion { background-color: rgba(255,255,255,0.02) !important; color: #ffffff !important; }
+                            .fc-list-event:hover td { background-color: rgba(255,255,255,0.05) !important; }
+                            .fc-list { border-color: rgba(255,255,255,0.04) !important; }
+                        }
+
+                        /* List View Overrides */
+                        .fc-list { border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); overflow: hidden; }
+                        .fc-list-day-cushion { background-color: rgba(0,0,0,0.02) !important; font-family: var(--font-cormorant), serif; font-size: 1.25rem; font-weight: 700; padding: 12px 16px !important; }
+                        .fc-list-event td { padding: 8px 16px !important; border: none !important; border-bottom: 1px solid rgba(0,0,0,0.03) !important; }
+                        .fc-list-event:hover td { background-color: rgba(0,0,0,0.02) !important; }
+                        .fc-list-event-time { font-weight: 700 !important; color: #52525b; width: 120px !important; font-variant-numeric: tabular-nums; }
+                        .fc-list-event-graphic { display: none !important; } /* Hide the default colored dot */
+                        .fc-list-empty { padding: 48px !important; font-size: 1rem; color: #a1a1aa; font-weight: 500; }
+                    `}</style>
+                    <FullCalendar
+                        ref={calendarRef}
+                        plugins={[timeGridPlugin, dayGridPlugin, multiMonthPlugin, interactionPlugin, listPlugin]}
+                        initialView="listWeek"
+                        headerToolbar={false}
+                        datesSet={handleDatesSet}
+                        locale={locale}
+                        events={calendarEvents}
+                        eventContent={renderEventContent}
+                        eventClick={handleEventClick}
+                        editable={true}
+                        eventDrop={handleEventDropOrResize}
+                        eventResize={handleEventDropOrResize}
+                        slotMinTime="07:00:00"
+                        slotMaxTime="22:00:00"
+                        allDaySlot={false}
+                        height="75vh"
+                        stickyHeaderDates={true}
+                        expandRows={false}
+                        slotEventOverlap={false}
+                        eventMinHeight={30}
+                        slotDuration="00:30:00"
+                        nowIndicator={true}
+                        dayMaxEvents={true}
+                    />
+                </div>
             </div>
 
             {/* Legend */}
