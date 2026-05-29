@@ -5,8 +5,8 @@ import { prisma } from "@/app/lib/prisma";
 import ClientDashboardClient from "./ClientDashboardClient";
 
 export const metadata = {
-    title: "My Appointments | Barbershop",
-    description: "View and manage your barbershop appointments.",
+    title: "My Appointments | BarberFlow",
+    description: "View and manage your BarberFlow appointments.",
 };
 
 export default async function ClientDashboardPage() {

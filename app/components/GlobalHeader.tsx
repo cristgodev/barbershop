@@ -18,8 +18,8 @@ export default function GlobalHeader() {
         return (
             <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
                 <Link href="/" className="flex items-center gap-3 group">
-                    <div className="w-8 h-8 bg-yellow-600 rounded flex items-center justify-center font-bold text-zinc-50 dark:text-zinc-950 group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.2)]">B</div>
-                    <h1 className="text-xl font-bold tracking-wide font-serif text-zinc-900 dark:text-white uppercase" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Barbershop</h1>
+                    <div className="w-8 h-8 bg-yellow-600 rounded flex items-center justify-center font-bold text-zinc-50 dark:text-zinc-950 group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.2)] text-sm">BF</div>
+                    <h1 className="text-xl font-bold tracking-wide font-serif text-zinc-900 dark:text-white uppercase" style={{ fontFamily: 'var(--font-cormorant), serif' }}>BarberFlow</h1>
                 </Link>
                 <div className="flex items-center gap-4">
                     <LanguageSwitcher />

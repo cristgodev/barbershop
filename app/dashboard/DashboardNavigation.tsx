@@ -41,7 +41,7 @@ export default function DashboardNavigation({ shop, userRole }: { shop: any, use
             <aside className={`w-64 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="h-16 flex items-center px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0 justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center font-bold text-white dark:text-black">B</div>
+                        <div className="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center font-bold text-white dark:text-black text-xs">BF</div>
                         <span className="font-bold text-lg tracking-tight truncate max-w-[150px]">{shop.name}</span>
                     </div>
                     {/* Close button for mobile */}

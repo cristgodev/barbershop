@@ -171,7 +171,7 @@ export default function HomeClient({ shops }: { shops: any[] }) {
 
       {/* 6. Simple SaaS Footer */}
       <footer className="w-full text-zinc-500 py-12 text-center relative z-10 border-t border-white/5 bg-black/20 backdrop-blur-sm">
-        <p className="text-xs font-semibold tracking-widest uppercase">&copy; {new Date().getFullYear()} The Barbershop SaaS. Construido para la Élite.</p>
+        <p className="text-xs font-semibold tracking-widest uppercase">&copy; {new Date().getFullYear()} The BarberFlow SaaS. Construido para la Élite.</p>
         <div className="mt-8 flex justify-center gap-8 text-xs font-bold uppercase tracking-widest">
             <a href="#" className="hover:text-white transition-colors">Términos</a>
             <a href="#" className="hover:text-white transition-colors">Privacidad</a>

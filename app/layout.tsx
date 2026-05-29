@@ -40,7 +40,7 @@ export default function RootLayout({
           {children}
         </main>
         <footer id="contacto" className="py-8 text-center text-sm text-zinc-500 border-t border-zinc-200 dark:border-zinc-800">
-          <p>© {new Date().getFullYear()} Barbershop SaaS. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} BarberFlow SaaS. All rights reserved.</p>
         </footer>
         </ThemeProvider>
       </body>
