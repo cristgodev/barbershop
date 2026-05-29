@@ -29,6 +29,11 @@ export default function OnboardingPage() {
         return null;
     }
 
+    if (session?.user?.role === 'CUSTOMER') {
+        router.push('/client/dashboard');
+        return null;
+    }
+
     // If somehow they already have a shop, kick them to dashboard
     if (session?.user?.barbershopId) {
         router.push('/dashboard');

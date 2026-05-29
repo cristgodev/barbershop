@@ -21,6 +21,10 @@ export default async function DashboardLayout({
     redirect('/superadmin')
   }
 
+  if (session.user.role === 'CUSTOMER') {
+    redirect('/client/dashboard')
+  }
+
   if (!session.user.barbershopId) {
     redirect('/onboarding')
   }
