@@ -19,9 +19,9 @@ export async function POST(req: Request) {
             where: { email },
         });
 
-        if (existingUser) {
+        if (existingUser && existingUser.role !== 'CUSTOMER') {
             return NextResponse.json(
-                { message: 'El correo electrónico ya está registrado.' },
+                { message: 'El correo electrónico ya está registrado con una cuenta administrativa.' },
                 { status: 409 }
             );
         }
@@ -47,17 +47,32 @@ export async function POST(req: Request) {
                 },
             });
 
-            // 2. Create User as OWNER and connect to Barbershop
-            const user = await tx.user.create({
-                data: {
-                    name: ownerName,
-                    email: email,
-                    phone: phone,
-                    passwordHash: passwordHash,
-                    role: 'OWNER',
-                    barbershopId: barbershop.id,
-                },
-            });
+            let user;
+            if (existingUser) {
+                // 2. Upgrade existing CUSTOMER to OWNER of the new shop
+                user = await tx.user.update({
+                    where: { id: existingUser.id },
+                    data: {
+                        name: ownerName,
+                        phone: phone,
+                        passwordHash: passwordHash,
+                        role: 'OWNER',
+                        barbershopId: barbershop.id,
+                    },
+                });
+            } else {
+                // 2. Create User as OWNER and connect to Barbershop
+                user = await tx.user.create({
+                    data: {
+                        name: ownerName,
+                        email: email,
+                        phone: phone,
+                        passwordHash: passwordHash,
+                        role: 'OWNER',
+                        barbershopId: barbershop.id,
+                    },
+                });
+            }
 
             return { barbershop, user };
         });
