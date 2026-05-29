@@ -215,6 +215,13 @@ export default function BookingForm({
         formData.append('date', selectedDate)
         formData.append('time', selectedTime)
 
+        // Parse local browser timezone values to construct accurate UTC string
+        const [y, m, d] = selectedDate.split('-').map(Number)
+        const [hr, min] = selectedTime.split(':').map(Number)
+        const slotStartDateTime = new Date(y, m - 1, d)
+        slotStartDateTime.setHours(hr, min, 0, 0)
+        formData.append('startTimeISO', slotStartDateTime.toISOString())
+
         try {
             const res = await fetch('/book/submit', {
                 method: 'POST',

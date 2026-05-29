@@ -33,8 +33,9 @@ export async function POST(request: Request) {
         return new Response(`Missing fields: ${missingFields.join(", ")}`, { status: 400 })
     }
 
-    // Combine date and time
-    const startDateTime = new Date(`${dateStr}T${timeStr}`)
+    // Combine date and time using browser ISO if available to prevent timezone shifts
+    const startTimeISO = formData.get("startTimeISO") as string
+    const startDateTime = startTimeISO ? new Date(startTimeISO) : new Date(`${dateStr}T${timeStr}`)
 
     // Get service duration
     const service = await prisma.service.findUnique({
