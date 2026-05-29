@@ -40,9 +40,25 @@ export default function ClientProfileClient({ clientId, shopCurrency }: { client
     const [newNote, setNewNote] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    // Inactivity Reminder States
+    const [shopSlug, setShopSlug] = useState('')
+    const [shopName, setShopName] = useState('')
+    const [reminderMessage, setReminderMessage] = useState('')
+    const [isSendingReminder, setIsSendingReminder] = useState(false)
+    const [reminderSuccess, setReminderSuccess] = useState(false)
+
     useEffect(() => {
         fetchClientData()
     }, [clientId])
+
+    // Set default reminder message when client or shop details load
+    useEffect(() => {
+        if (client) {
+            const clientName = client.name || 'cliente'
+            const link = typeof window !== 'undefined' ? `${window.location.origin}/${shopSlug || ''}` : `/${shopSlug || ''}`
+            setReminderMessage(`¡Hola ${clientName}! Te extrañamos en ${shopName || 'BarberFlow'}. Hace más de un mes que no nos visitas y tu cabello/barba lo sabe. 💈⚡️\n\n¿Qué tal si agendas tu próximo corte hoy? Reserva en línea en segundos aquí: ${link}`)
+        }
+    }, [client, shopSlug, shopName])
 
     const fetchClientData = async () => {
         try {
@@ -52,6 +68,8 @@ export default function ClientProfileClient({ clientId, shopCurrency }: { client
                 setClient(data.client)
                 setAppointments(data.appointments)
                 setNotes(data.notes)
+                setShopSlug(data.shopSlug || '')
+                setShopName(data.shopName || '')
             } else {
                 router.push('/dashboard/clients')
             }
@@ -59,6 +77,39 @@ export default function ClientProfileClient({ clientId, shopCurrency }: { client
             console.error('Failed to fetch client details', error)
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const handleSendReminder = async (method: 'whatsapp' | 'email') => {
+        setIsSendingReminder(true)
+        try {
+            const typeText = method === 'whatsapp' ? 'WhatsApp' : 'Email'
+            const content = `[Recordatorio de Inactividad enviado por ${typeText}] "${reminderMessage}"`
+            
+            // 1. Post note to CRM database
+            const res = await fetch(`/api/clients/${clientId}/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            })
+            const data = await res.json()
+            if (data.success) {
+                setNotes([data.note, ...notes])
+            }
+            
+            // 2. If WhatsApp, trigger the redirection
+            if (method === 'whatsapp' && client?.phone) {
+                const cleanPhone = client.phone.replace(/[^0-9+]/g, '')
+                const waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(reminderMessage)}`
+                window.open(waLink, '_blank')
+            }
+            
+            setReminderSuccess(true)
+            setTimeout(() => setReminderSuccess(false), 5000)
+        } catch (error) {
+            console.error('Failed to send inactivity reminder:', error)
+        } finally {
+            setIsSendingReminder(false)
         }
     }
 
@@ -98,6 +149,18 @@ export default function ClientProfileClient({ clientId, shopCurrency }: { client
         .reduce((sum, a) => sum + (a.service?.price || 0), 0)
 
     const noShows = appointments.filter(a => a.status === 'CANCELLED' || a.status === 'NO_SHOW').length
+
+    const completedApps = appointments.filter(a => a.status === 'COMPLETED')
+    const lastCompletedApp = completedApps.length > 0 ? completedApps[0] : null
+    
+    let daysSinceLastActive: number | null = null
+    if (lastCompletedApp) {
+        const lastDate = new Date(lastCompletedApp.date)
+        const diffTime = Math.abs(new Date().getTime() - lastDate.getTime())
+        daysSinceLastActive = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    } else {
+        daysSinceLastActive = 999 // Has never completed an appointment
+    }
 
     return (
         <div className="w-full max-w-6xl mx-auto pb-12">
@@ -167,6 +230,70 @@ export default function ClientProfileClient({ clientId, shopCurrency }: { client
 
                 {/* Right Column: Appointments & Notes Tabs */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Inactivity Alert & Customizable Reminder Card */}
+                    {daysSinceLastActive !== null && daysSinceLastActive >= 30 && (
+                        <div className="bg-gradient-to-br from-amber-500/10 to-yellow-600/5 dark:from-amber-950/20 dark:to-zinc-900 border border-amber-200 dark:border-amber-900/50 rounded-3xl p-6 shadow-sm relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 blur-[50px] pointer-events-none"></div>
+                            
+                            <div className="flex items-start gap-4">
+                                <span className="w-12 h-12 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center shrink-0">
+                                    <ClockIcon className="w-6 h-6" />
+                                </span>
+                                <div className="flex-1 space-y-1">
+                                    <h4 className="text-lg font-bold font-serif text-amber-800 dark:text-amber-400" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
+                                        Alerta de Inactividad ({daysSinceLastActive === 999 ? 'Sin visitas anteriores' : `Última visita hace ${daysSinceLastActive} días`})
+                                    </h4>
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                        Este cliente no ha completado citas en la tienda en un mes o más. Envíale un recordatorio personalizado para invitarlo a regresar.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {/* Customizable Message Input */}
+                            <div className="mt-6 space-y-4 relative z-10">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Mensaje Recordatorio Personalizable</label>
+                                    <textarea
+                                        value={reminderMessage}
+                                        onChange={(e) => setReminderMessage(e.target.value)}
+                                        rows={4}
+                                        className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-600 focus:border-yellow-600 transition-shadow text-zinc-900 dark:text-white"
+                                    />
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {client.phone ? (
+                                        <button
+                                            onClick={() => handleSendReminder('whatsapp')}
+                                            disabled={isSendingReminder}
+                                            className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-[0_4px_10px_rgba(22,163,74,0.2)]"
+                                        >
+                                            <span>Enviar por WhatsApp 💬</span>
+                                        </button>
+                                    ) : (
+                                        <span className="text-xs text-zinc-500 italic bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-full border border-dashed border-zinc-200 dark:border-zinc-800">
+                                            ⚠️ Sin WhatsApp (No tiene número)
+                                        </span>
+                                    )}
+                                    
+                                    <button
+                                        onClick={() => handleSendReminder('email')}
+                                        disabled={isSendingReminder}
+                                        className="flex items-center gap-2 bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition-all active:scale-95 border border-zinc-200 dark:border-zinc-800"
+                                    >
+                                        <span>Simular Envío Email ✉️</span>
+                                    </button>
+                                </div>
+                                
+                                {reminderSuccess && (
+                                    <div className="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 p-3 rounded-xl text-xs border border-green-200 dark:border-green-800/50 font-medium text-center animate-in fade-in slide-in-from-top-2 duration-300">
+                                        ¡Recordatorio enviado con éxito y registrado en el historial de notas del cliente!
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Notes Section (CRM Core) */}
                     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm overflow-hidden flex flex-col h-[500px]">
                         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50">

@@ -21,8 +21,8 @@ export async function GET(
             return NextResponse.json({ error: 'No barbershop associated with user' }, { status: 400 })
         }
 
-        // Get notes and appointments for this client at this shop
-        const [notes, appointments, clientUser] = await Promise.all([
+        // Get notes, appointments, client user and barbershop info
+        const [notes, appointments, clientUser, barbershop] = await Promise.all([
             prisma.clientNote.findMany({
                 where: { 
                     customerId: clientId,
@@ -49,6 +49,10 @@ export async function GET(
             prisma.user.findUnique({
                 where: { id: clientId },
                 select: { id: true, name: true, email: true, phone: true, image: true, createdAt: true }
+            }),
+            prisma.barbershop.findUnique({
+                where: { id: barbershopId },
+                select: { slug: true, name: true }
             })
         ]);
 
@@ -60,7 +64,9 @@ export async function GET(
             success: true, 
             client: clientUser,
             notes, 
-            appointments 
+            appointments,
+            shopSlug: barbershop?.slug,
+            shopName: barbershop?.name
         })
 
     } catch (error: any) {
