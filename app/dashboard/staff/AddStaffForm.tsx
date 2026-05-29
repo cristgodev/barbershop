@@ -10,6 +10,7 @@ export default function AddStaffForm({ barbershopId }: { barbershopId: string })
 
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
+    const [phone, setPhone] = useState('')
     const [password, setPassword] = useState('')
 
     const [error, setError] = useState('')
@@ -20,22 +21,38 @@ export default function AddStaffForm({ barbershopId }: { barbershopId: string })
         setError('')
         setIsLoading(true)
 
+        // Client-side syntax validation with bypass for @prueba testing emails
+        const emailLower = email.toLowerCase()
+        const isTestingEmail = emailLower.includes('prueba')
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
+        if (!isTestingEmail && !emailRegex.test(email)) {
+            setError(t('staff.invalid_email_format'))
+            setIsLoading(false)
+            return
+        }
+
         try {
             const res = await fetch('/api/staff', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, barbershopId })
+                body: JSON.stringify({ name, email, phone, password, barbershopId })
             })
 
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error || t('staff.error_occurred'))
+                // If it is one of our custom validation error codes, translate it
+                const errorMsg = data.error === 'invalid_email_format' || data.error === 'invalid_email_domain' || data.error === 'email_in_use'
+                    ? t('staff.' + data.error)
+                    : (data.error || t('staff.error_occurred'))
+                throw new Error(errorMsg)
             }
 
             // Success
             setName('')
             setEmail('')
+            setPhone('')
             setPassword('')
             router.refresh()
 
@@ -76,6 +93,18 @@ export default function AddStaffForm({ barbershopId }: { barbershopId: string })
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="barber@example.com"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:bg-white dark:focus:bg-zinc-900 text-sm transition-all"
+                />
+            </div>
+
+            <div className="space-y-1.5 mt-4">
+                <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('staff.phone_number')}</label>
+                <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    placeholder="+57 300 123 4567"
                     className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:bg-white dark:focus:bg-zinc-900 text-sm transition-all"
                 />
             </div>

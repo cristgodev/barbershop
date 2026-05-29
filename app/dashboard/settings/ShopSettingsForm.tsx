@@ -25,6 +25,7 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
     const [isGamificationEnabled, setIsGamificationEnabled] = useState(shop.isGamificationEnabled ?? true)
     const [isMarketingEnabled, setIsMarketingEnabled] = useState(shop.isMarketingEnabled ?? false)
     const [isLoyaltyEnabled, setIsLoyaltyEnabled] = useState(shop.isLoyaltyEnabled ?? false)
+    const [loyaltyRatio, setLoyaltyRatio] = useState(shop.loyaltyRatio ?? 5)
     
     // UI states for actual files
     const [heroFile, setHeroFile] = useState<File | null>(null)
@@ -73,7 +74,8 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                     heroImageUrl: finalHeroUrl,
                     galleryUrls: finalGalleryUrls,
                     currency,
-                    isCrmEnabled, isPosEnabled, isGamificationEnabled, isMarketingEnabled, isLoyaltyEnabled
+                    isCrmEnabled, isPosEnabled, isGamificationEnabled, isMarketingEnabled, isLoyaltyEnabled,
+                    loyaltyRatio: Number(loyaltyRatio)
                 })
             })
 
@@ -308,13 +310,34 @@ export default function ShopSettingsForm({ shop }: { shop: any }) {
                         <input type="checkbox" checked={isMarketingEnabled} onChange={(e) => setIsMarketingEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
                     </label>
 
-                    <label className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-black dark:hover:border-white transition-colors">
-                        <div>
-                            <span className="block font-bold text-zinc-400">Loyalty Programs</span>
-                            <span className="text-xs text-zinc-500">Puntos de lealtad para clientes finales.</span>
-                        </div>
-                        <input type="checkbox" checked={isLoyaltyEnabled} onChange={(e) => setIsLoyaltyEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
-                    </label>
+                    <div className="flex flex-col gap-4 bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer">
+                            <div>
+                                <span className="block font-bold">Loyalty Programs</span>
+                                <span className="text-xs text-zinc-500">Puntos de lealtad para clientes finales.</span>
+                            </div>
+                            <input type="checkbox" checked={isLoyaltyEnabled} onChange={(e) => setIsLoyaltyEnabled(e.target.checked)} className="h-5 w-5 rounded border-zinc-300 text-black focus:ring-black" />
+                        </label>
+                        {isLoyaltyEnabled && (
+                            <div className="pt-3 border-t border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-fade-in">
+                                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                                    Relación de Puntos: 1 Punto por cada:
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <input 
+                                        type="number"
+                                        min={1}
+                                        value={loyaltyRatio}
+                                        onChange={e => setLoyaltyRatio(Number(e.target.value))}
+                                        className="w-24 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-sm text-center font-bold focus:ring-0 focus:border-yellow-600"
+                                    />
+                                    <span className="text-xs font-bold text-zinc-400">
+                                        {currency} gastados
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

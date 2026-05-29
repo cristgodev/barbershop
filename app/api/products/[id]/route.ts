@@ -15,6 +15,19 @@ export async function PUT(
 
         const resolvedParams = await params
         const productId = resolvedParams.id
+        const barbershopId = session.user.barbershopId
+
+        if (!barbershopId) {
+            return NextResponse.json({ error: 'No shop associated' }, { status: 400 })
+        }
+
+        // BOLA/IDOR protection: verify product ownership
+        const existingProduct = await prisma.product.findUnique({
+            where: { id: productId }
+        })
+        if (!existingProduct || existingProduct.barbershopId !== barbershopId) {
+            return NextResponse.json({ error: 'Product not found or access denied' }, { status: 404 })
+        }
         
         const body = await req.json()
         const { name, description, price, stock, sku, imageUrl } = body
@@ -52,6 +65,19 @@ export async function DELETE(
 
         const resolvedParams = await params
         const productId = resolvedParams.id
+        const barbershopId = session.user.barbershopId
+
+        if (!barbershopId) {
+            return NextResponse.json({ error: 'No shop associated' }, { status: 400 })
+        }
+
+        // BOLA/IDOR protection: verify product ownership
+        const existingProduct = await prisma.product.findUnique({
+            where: { id: productId }
+        })
+        if (!existingProduct || existingProduct.barbershopId !== barbershopId) {
+            return NextResponse.json({ error: 'Product not found or access denied' }, { status: 404 })
+        }
 
         await prisma.product.delete({
             where: { id: productId }

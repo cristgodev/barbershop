@@ -28,19 +28,43 @@ type AppointmentData = {
     };
 };
 
+type RewardData = {
+    id: string;
+    name: string;
+    pointsCost: number;
+    description: string | null;
+};
+
 export default function ClientDashboardClient({
     userName,
     upcomingAppointments,
-    pastAppointments
+    pastAppointments,
+    loyaltyPoints = 0,
+    shopSlug = "",
+    shopName = "",
+    rewards = []
 }: {
     userName: string;
     upcomingAppointments: AppointmentData[];
     pastAppointments: AppointmentData[];
+    loyaltyPoints: number;
+    shopSlug?: string;
+    shopName?: string;
+    rewards: RewardData[];
 }) {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
     const displayedAppointments = activeTab === 'upcoming' ? upcomingAppointments : pastAppointments;
+
+    // Standard fallback rewards if none exist yet for the shop
+    const fallbackRewards = [
+        { id: 'f-1', name: 'Bebida Premium o Descuento de $5', pointsCost: 100, description: 'Refresco importado, cerveza artesanal o descuento directo.' },
+        { id: 'f-2', name: 'Cera para el Cabello Gratis', pointsCost: 250, description: 'Cera de fijación fuerte o mate de nuestra línea retail.' },
+        { id: 'f-3', name: 'Corte & Barba VIP 100% Gratis', pointsCost: 500, description: 'Servicio completo VIP con afeitado a navaja y toalla caliente.' }
+    ]
+
+    const displayRewards = rewards.length > 0 ? rewards : fallbackRewards
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
@@ -48,8 +72,8 @@ export default function ClientDashboardClient({
             <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/" className="font-extrabold text-xl tracking-tight hover:opacity-70 transition-opacity" suppressHydrationWarning>
-                            BARBERSHOP
+                        <Link href="/client/dashboard" className="font-extrabold text-xl tracking-tight hover:opacity-70 transition-opacity uppercase font-serif" style={{ fontFamily: 'var(--font-cormorant), serif' }} suppressHydrationWarning>
+                            {shopName || "BARBERSHOP"}
                         </Link>
                     </div>
                     <div className="flex items-center gap-4">
@@ -65,9 +89,86 @@ export default function ClientDashboardClient({
             </header>
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
-                <div className="mb-10">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">{t('client_dashboard.my_appointments')}</h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-lg">{t('client_dashboard.subtitle')}</p>
+                {/* Loyalty Balance Card */}
+                <div className="mb-10 p-6 sm:p-8 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black dark:from-zinc-900 dark:via-zinc-950 dark:to-black border border-zinc-850 rounded-3xl relative overflow-hidden shadow-lg text-white">
+                    {/* Glowing background effects */}
+                    <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 rounded-full bg-yellow-500/10 blur-3xl pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 rounded-full bg-yellow-600/5 blur-3xl pointer-events-none"></div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">
+                                Club de Lealtad VIP
+                            </span>
+                            <h2 className="text-2xl sm:text-3xl font-black tracking-tight pt-1">
+                                ¡Hola, {userName.split(' ')[0]}!
+                            </h2>
+                            <p className="text-sm text-zinc-400 max-w-md">
+                                Acumula puntos con cada cita completada y compras en el POS. ¡Canjéalos por excelentes premios en tu próxima visita!
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-2xl shrink-0 backdrop-blur-md">
+                            <div className="w-12 h-12 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center font-bold">
+                                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold text-zinc-400 block uppercase tracking-wider">Tu Balance Activo</span>
+                                <span className="text-3xl font-black text-yellow-500 font-serif leading-none">{loyaltyPoints} Pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Unlocked Rewards List */}
+                    <div className="mt-8 pt-8 border-t border-white/5">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-4">Premios y Recompensas Disponibles</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {displayRewards.map(reward => {
+                                const isUnlocked = loyaltyPoints >= reward.pointsCost;
+                                const percent = Math.min((loyaltyPoints / reward.pointsCost) * 100, 100);
+                                
+                                return (
+                                    <div 
+                                        key={reward.id} 
+                                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between h-36 ${isUnlocked ? 'border-yellow-500/30 bg-yellow-500/5' : 'border-white/5 bg-white/[0.02] opacity-60'}`}
+                                    >
+                                        <div>
+                                            <div className="flex justify-between items-start gap-2 mb-1.5">
+                                                <h4 className="font-bold text-xs text-zinc-200 line-clamp-1">{reward.name}</h4>
+                                                {isUnlocked && (
+                                                    <span className="text-[8px] font-extrabold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded shrink-0 uppercase tracking-widest border border-green-500/20">
+                                                        Listo
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] text-zinc-400 line-clamp-2 leading-relaxed mb-3">
+                                                {reward.description || 'Canjeable directamente en tu próxima compra o cita.'}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1.5 mt-auto">
+                                            <div className="flex justify-between text-[9px] font-bold">
+                                                <span className="text-zinc-500">{reward.pointsCost} pts</span>
+                                                {!isUnlocked && (
+                                                    <span className="text-yellow-600">{loyaltyPoints} / {reward.pointsCost} pts</span>
+                                                )}
+                                            </div>
+                                            <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full transition-all duration-1000 ${isUnlocked ? 'bg-yellow-500' : 'bg-zinc-600'}`} 
+                                                    style={{ width: `${percent}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Appointments Heading */}
+                <div className="mb-6">
+                    <h2 className="text-2xl font-black tracking-tight">{t('client_dashboard.my_appointments')}</h2>
+                    <p className="text-zinc-500 text-sm">{t('client_dashboard.subtitle')}</p>
                 </div>
 
                 {/* Tabs */}
@@ -110,7 +211,7 @@ export default function ClientDashboardClient({
                             </p>
                             {activeTab === 'upcoming' && (
                                 <Link 
-                                    href="/"
+                                    href={shopSlug ? `/${shopSlug}` : "/"}
                                     className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
                                 >
                                     {t('client_dashboard.find_shop')}
@@ -220,7 +321,7 @@ export default function ClientDashboardClient({
                                         )}
                                     </div>
                                 </div>
-                            )
+                            );
                         })
                     )}
                 </div>

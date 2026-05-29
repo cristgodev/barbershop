@@ -18,10 +18,24 @@ export default async function AccountingPage() {
                 where: { status: 'COMPLETED' },
                 include: {
                     service: true,
-                    barber: true
+                    barber: true,
+                    customer: true
                 }
             },
-            sales: true,
+            sales: {
+                include: {
+                    barber: { select: { name: true } },
+                    customer: { select: { name: true } },
+                    items: {
+                        include: {
+                            product: { select: { name: true } }
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            },
             staff: true
         }
     })
@@ -150,5 +164,28 @@ export default async function AccountingPage() {
         all: { ...rawStats.all, barbers: sortBarbers(rawStats.all.barbers) }
     }
 
-    return <AccountingClient stats={finalStats as any} />
+    const transactions = [
+        ...barbershop.appointments.map(app => ({
+            id: app.id,
+            type: 'SERVICE' as const,
+            date: app.date.toISOString(),
+            barberName: app.barber.name || 'Staff',
+            customerName: app.customer?.name || 'Cliente de Paso',
+            description: `Servicio: ${app.service.name}`,
+            paymentMethod: 'TARJETA' as const, // Appointments represent card/online or default card
+            amount: app.service.price
+        })),
+        ...barbershop.sales.map(sale => ({
+            id: sale.id,
+            type: 'PRODUCT' as const,
+            date: sale.createdAt.toISOString(),
+            barberName: sale.barber?.name || 'Staff',
+            customerName: sale.customer?.name || 'Cliente de Paso',
+            description: `Productos: ${sale.items.map((i: any) => `${i.product.name} (x${i.quantity})`).join(', ')}`,
+            paymentMethod: (sale.paymentMethod === 'CASH' ? 'EFECTIVO' : 'TARJETA') as 'EFECTIVO' | 'TARJETA',
+            amount: sale.totalAmount
+        }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    return <AccountingClient stats={finalStats as any} transactions={transactions} />
 }

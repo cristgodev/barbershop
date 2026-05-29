@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 type Client = {
     id: string
@@ -14,17 +14,84 @@ export default function MarketingClient({ clients }: { clients: Client[] }) {
     const [blastMessage, setBlastMessage] = useState('')
     const [isSending, setIsSending] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
+    
+    // Image Upload State
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [previewUrl, setPreviewUrl] = useState('')
+    
+    // Campaign History State
+    const [campaigns, setCampaigns] = useState<any[]>([])
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
-    const handleSendBlast = () => {
+    useEffect(() => {
+        fetchCampaigns()
+    }, [])
+
+    const fetchCampaigns = async () => {
+        setIsLoadingHistory(true)
+        try {
+            const res = await fetch('/api/marketing')
+            const data = await res.json()
+            if (data.success) {
+                setCampaigns(data.campaigns)
+            }
+        } catch (error) {
+            console.error('Error fetching campaign history:', error)
+        } finally {
+            setIsLoadingHistory(false)
+        }
+    }
+
+    const uploadFile = async (file: File) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        })
+        
+        if (!res.ok) throw new Error('Failed to upload file')
+        const data = await res.json()
+        return data.files[0].url as string
+    }
+
+    const handleSendBlast = async () => {
         if (!blastMessage.trim()) return alert('El mensaje está vacío')
         setIsSending(true)
-        // Simulate an API call to a Mail provider like SendGrid or Twilio
-        setTimeout(() => {
+        try {
+            let uploadedImageUrl = ''
+            if (imageFile) {
+                uploadedImageUrl = await uploadFile(imageFile)
+            }
+
+            const res = await fetch('/api/marketing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: blastMessage,
+                    imageUrl: uploadedImageUrl || null
+                })
+            })
+
+            const data = await res.json()
+            if (data.success) {
+                setSuccessMsg(`¡Campaña enviada exitosamente a ${clients.length} clientes!`)
+                setBlastMessage('')
+                setImageFile(null)
+                setPreviewUrl('')
+                // Refresh history
+                fetchCampaigns()
+                setTimeout(() => setSuccessMsg(''), 4000)
+            } else {
+                alert(data.error || 'Error al enviar campaña')
+            }
+        } catch (error) {
+            console.error(error)
+            alert('Error al conectar con el servidor')
+        } finally {
             setIsSending(false)
-            setBlastMessage('')
-            setSuccessMsg(`¡Campaña enviada exitosamente a ${clients.length} clientes!`)
-            setTimeout(() => setSuccessMsg(''), 4000)
-        }, 1500)
+        }
     }
 
     const noShowClients = clients.filter(c => c.noShowCount > 0)
@@ -47,22 +114,64 @@ export default function MarketingClient({ clients }: { clients: Client[] }) {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Blast Compose Section */}
-                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm flex flex-col">
-                    <h2 className="text-xl font-bold font-serif mb-4">Nueva Campaña (Email/SMS Blast)</h2>
-                    <p className="text-sm text-zinc-500 mb-6">Redacta una promoción para todos tus clientes. Ejemplo: "¡Regresa este martes y obtén 20% OFF en ceras!"</p>
-                    
-                    <textarea 
-                        value={blastMessage}
-                        onChange={e => setBlastMessage(e.target.value)}
-                        placeholder="Escribe tu mensaje o promoción aquí..."
-                        rows={5}
-                        className="w-full mb-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 text-sm focus:ring-0 focus:border-black dark:focus:border-white resize-none"
-                    />
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold font-serif mb-4">Nueva Campaña (Email/SMS Blast)</h2>
+                        <p className="text-sm text-zinc-500 mb-6">Redacta una promoción para todos tus clientes. Ejemplo: "¡Regresa este martes y obtén 20% OFF en ceras!"</p>
+                        
+                        <textarea 
+                            value={blastMessage}
+                            onChange={e => setBlastMessage(e.target.value)}
+                            placeholder="Escribe tu mensaje o promoción aquí..."
+                            rows={5}
+                            className="w-full mb-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 text-sm focus:ring-0 focus:border-black dark:focus:border-white resize-none"
+                        />
+
+                        {/* Image Upload Input */}
+                        <div className="space-y-2 mb-6">
+                            <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">Imagen Promocional (Opcional)</label>
+                            <div className="flex items-center gap-4">
+                                <label className="flex flex-col items-center justify-center w-32 h-20 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl cursor-pointer hover:border-black dark:hover:border-white transition-colors relative overflow-hidden">
+                                    {previewUrl ? (
+                                        <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
+                                    ) : (
+                                        <div className="flex flex-col items-center text-zinc-400">
+                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <span className="text-[10px] font-bold mt-1">Añadir Imagen</span>
+                                        </div>
+                                    )}
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        onChange={e => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                const file = e.target.files[0]
+                                                setImageFile(file)
+                                                setPreviewUrl(URL.createObjectURL(file))
+                                            }
+                                        }} 
+                                        className="hidden" 
+                                    />
+                                </label>
+                                {previewUrl && (
+                                    <button 
+                                        onClick={() => {
+                                            setImageFile(null)
+                                            setPreviewUrl('')
+                                        }} 
+                                        className="text-red-500 text-xs font-semibold hover:underline"
+                                    >
+                                        Quitar Imagen
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
                     <button 
                         onClick={handleSendBlast}
                         disabled={isSending || !blastMessage.trim()}
-                        className="mt-auto w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-50"
+                        className="w-full bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-black font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-50"
                     >
                         {isSending ? 'Enviando Campaña...' : 'Disparar SMS/Email a Todos'}
                     </button>
@@ -103,7 +212,7 @@ export default function MarketingClient({ clients }: { clients: Client[] }) {
                 </div>
             </div>
             
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm mb-8">
                 <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
                     <h2 className="font-bold text-lg">Audiencia Activa ({activeClients.length})</h2>
                 </div>
@@ -132,6 +241,49 @@ export default function MarketingClient({ clients }: { clients: Client[] }) {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Campaign History Blast Log */}
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-yellow-500/5 blur-3xl pointer-events-none"></div>
+                
+                <h2 className="text-xl font-bold font-serif mb-2" style={{ fontFamily: 'var(--font-cormorant), serif' }}>Historial de Campañas Enviadas</h2>
+                <p className="text-zinc-500 text-sm mb-6">Un registro de todas las campañas promocionales enviadas a tus clientes.</p>
+
+                {isLoadingHistory ? (
+                    <div className="py-12 text-center text-zinc-500">Cargando historial...</div>
+                ) : campaigns.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {campaigns.map((camp: any) => (
+                            <div key={camp.id} className="flex gap-4 p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl relative overflow-hidden">
+                                {camp.imageUrl && (
+                                    <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                        <img src={camp.imageUrl} className="w-full h-full object-cover" alt="Camp" />
+                                    </div>
+                                )}
+                                <div className="flex flex-col flex-1 min-w-0">
+                                    <p className="text-zinc-500 text-xs font-semibold mb-1">
+                                        {new Date(camp.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    <p className="text-sm text-zinc-800 dark:text-zinc-200 font-medium flex-1 line-clamp-3 leading-snug">
+                                        {camp.message}
+                                    </p>
+                                    <div className="mt-3 flex items-center justify-between text-xs font-semibold text-zinc-400">
+                                        <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                            Enviado
+                                        </span>
+                                        <span>Receptores: {camp.sentToCount}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="py-12 text-center text-zinc-400 font-semibold border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                        Aún no has enviado ninguna campaña de marketing.
+                    </div>
+                )}
             </div>
         </div>
     )

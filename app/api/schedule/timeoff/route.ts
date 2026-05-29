@@ -22,6 +22,16 @@ export async function POST(req: Request) {
             return new NextResponse('Forbidden', { status: 403 })
         }
 
+        if (session.user.role === 'OWNER') {
+            const barber = await prisma.user.findUnique({
+                where: { id: barberId },
+                select: { barbershopId: true }
+            })
+            if (!barber || barber.barbershopId !== session.user.barbershopId) {
+                return new NextResponse('Forbidden', { status: 403 })
+            }
+        }
+
         const parsedDate = new Date(date)
 
         const timeOff = await prisma.timeOff.create({
@@ -57,6 +67,16 @@ export async function DELETE(req: Request) {
 
         if (session.user.role === 'BARBER' && session.user.id !== timeOff.barberId) {
             return new NextResponse('Forbidden', { status: 403 })
+        }
+
+        if (session.user.role === 'OWNER') {
+            const barber = await prisma.user.findUnique({
+                where: { id: timeOff.barberId },
+                select: { barbershopId: true }
+            })
+            if (!barber || barber.barbershopId !== session.user.barbershopId) {
+                return new NextResponse('Forbidden', { status: 403 })
+            }
         }
 
         await prisma.timeOff.delete({ where: { id } })

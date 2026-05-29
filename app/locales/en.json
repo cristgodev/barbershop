@@ -163,7 +163,14 @@
     "login_info": "The barber will use this to login.",
     "adding_barber": "Adding Barber...",
     "invite_barber": "Invite Barber",
-    "error_occurred": "An error occurred"
+    "error_occurred": "An error occurred",
+    "invalid_email_format": "The email address format is invalid (e.g., barber@domain.com).",
+    "invalid_email_domain": "The email domain does not exist or cannot receive emails.",
+    "email_in_use": "This email address is already registered.",
+    "phone_number": "WhatsApp Number *",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "delete_confirm": "Are you sure you want to delete the barber {name}? This action is permanent and irreversible."
   },
   "services": {
     "title": "Services Menu",
@@ -238,9 +245,9 @@
     "history": "History",
     "no_upcoming": "No upcoming appointments",
     "no_history": "No past appointments",
-    "no_upcoming_desc": "You don't have any appointments scheduled yet. Find a shop and book your next haircut.",
+    "no_upcoming_desc": "You don't have any appointments scheduled yet. Book your next haircut with us.",
     "no_past_desc": "You don't have any past appointments yet.",
-    "find_shop": "Find a Barbershop",
+    "find_shop": "Book Appointment",
     "contact": "Contact",
     "view_ticket": "View Ticket",
     "status_cancelled": "Cancelled",

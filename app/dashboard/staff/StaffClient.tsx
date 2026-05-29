@@ -1,11 +1,36 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../contexts/LanguageContext';
 import AddStaffForm from "./AddStaffForm"
 import PageTour from '../PageTour'
 
 export default function StaffClient({ staffMembers, shopSlug, barbershopId }: { staffMembers: any[], shopSlug: string, barbershopId: string }) {
     const { t } = useTranslation()
+    const router = useRouter()
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+
+    const handleDelete = async (id: string, name: string) => {
+        const confirmMsg = t('staff.delete_confirm').replace('{name}', name)
+        if (!window.confirm(confirmMsg)) return
+
+        setDeletingId(id)
+        try {
+            const res = await fetch(`/api/staff?id=${id}`, {
+                method: 'DELETE'
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                throw new Error(data.error || t('staff.error_occurred'))
+            }
+            router.refresh()
+        } catch (err: any) {
+            alert(err.message)
+        } finally {
+            setDeletingId(null)
+        }
+    }
 
     return (
         <div className="max-w-6xl w-full mx-auto pb-12 relative">
@@ -82,6 +107,16 @@ export default function StaffClient({ staffMembers, shopSlug, barbershopId }: { 
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                             {t('staff.view_profile')}
                                         </a>
+                                        {staff.role !== 'OWNER' && (
+                                            <button
+                                                disabled={deletingId === staff.id}
+                                                onClick={() => handleDelete(staff.id, staff.name)}
+                                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-950/20 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/30 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                                {deletingId === staff.id ? t('staff.deleting') : t('staff.delete')}
+                                            </button>
+                                        )}
                                     </div>
                             </div>
                         ))}

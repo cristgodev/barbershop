@@ -17,6 +17,10 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  if (session.user.role === 'SUPERADMIN') {
+    redirect('/superadmin')
+  }
+
   if (!session.user.barbershopId) {
     redirect('/onboarding')
   }
@@ -29,13 +33,17 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  if (shop.isActive === false) {
+    redirect('/suspended')
+  }
+
   const currentUser = session.user
 
   return (
     <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950">
       <MobileNavProvider>
         {/* Sidebar Navigation */}
-        <DashboardNavigation shop={shop} />
+        <DashboardNavigation shop={shop} userRole={currentUser.role} />
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-h-screen relative w-full">

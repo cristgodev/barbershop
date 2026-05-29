@@ -5,11 +5,11 @@ import bcrypt from 'bcryptjs';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { barbershopName, ownerName, email, password } = body;
+        const { barbershopName, ownerName, email, password, phone } = body;
 
-        if (!barbershopName || !ownerName || !email || !password) {
+        if (!barbershopName || !ownerName || !email || !password || !phone) {
             return NextResponse.json(
-                { message: 'Missing required fields' },
+                { message: 'Faltan campos obligatorios (incluyendo número de teléfono/WhatsApp)' },
                 { status: 400 }
             );
         }
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
         if (existingUser) {
             return NextResponse.json(
-                { message: 'Email already exists' },
+                { message: 'El correo electrónico ya está registrado.' },
                 { status: 409 }
             );
         }
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
                 data: {
                     name: ownerName,
                     email: email,
+                    phone: phone,
                     passwordHash: passwordHash,
                     role: 'OWNER',
                     barbershopId: barbershop.id,

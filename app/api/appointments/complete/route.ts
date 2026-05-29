@@ -20,7 +20,10 @@ export async function POST(req: Request) {
 
         const appointment = await prisma.appointment.findUnique({
             where: { id: appointmentId },
-            include: { barbershop: { select: { staff: { select: { id: true } } } } }
+            include: { 
+                barbershop: true,
+                service: true
+            }
         })
 
         if (!appointment) {
@@ -41,11 +44,27 @@ export async function POST(req: Request) {
             include: { customer: true }
         })
 
-        // Give +10 loyalty points if the appointment has a registered customer
-        if (updated.customerId) {
-            await prisma.user.update({
-                where: { id: updated.customerId },
-                data: { loyaltyPoints: { increment: 10 } }
+        // Give dynamic loyalty points based on service price and shop ratio if the appointment has a registered customer
+        if (updated.customerId && appointment.service) {
+            const price = Number(appointment.service.price) || 0
+            const ratio = appointment.barbershop.loyaltyRatio || 5
+            const pointsToAward = price > 0 ? Math.max(1, Math.round(price / ratio)) : 0
+
+            await prisma.customerLoyalty.upsert({
+                where: {
+                    userId_barbershopId: {
+                        userId: updated.customerId,
+                        barbershopId: appointment.barbershopId
+                    }
+                },
+                update: {
+                    points: { increment: pointsToAward }
+                },
+                create: {
+                    userId: updated.customerId,
+                    barbershopId: appointment.barbershopId,
+                    points: pointsToAward
+                }
             })
         }
 

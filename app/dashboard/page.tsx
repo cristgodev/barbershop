@@ -15,6 +15,10 @@ export default async function DashboardPage() {
         redirect('/login')
     }
 
+    if (session.user.role === 'SUPERADMIN') {
+        redirect('/superadmin')
+    }
+
     if (!session.user.barbershopId) {
         redirect('/onboarding')
     }
@@ -31,6 +35,19 @@ export default async function DashboardPage() {
                 orderBy: {
                     date: 'asc'
                 }
+            },
+            sales: {
+                include: {
+                    customer: { select: { name: true } },
+                    items: {
+                        include: {
+                            product: { select: { name: true } }
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
             }
         }
     })
@@ -40,6 +57,7 @@ export default async function DashboardPage() {
     }
 
     const currentUser = session.user
+    const isBarber = currentUser.role === 'BARBER'
 
     const staffMembers = await prisma.user.findMany({
         where: { barbershopId: session!.user.barbershopId, role: { in: ['OWNER', 'MANAGER', 'BARBER'] } },
@@ -101,7 +119,16 @@ export default async function DashboardPage() {
         appointments: 0
     }))
 
-    shop!.appointments.forEach(app => {
+    // Filter appointments and sales if the logged-in user is a BARBER
+    const appointmentsToProcess = isBarber 
+        ? shop!.appointments.filter(app => app.barberId === currentUser.id)
+        : shop!.appointments
+
+    const salesToProcess = isBarber
+        ? shop!.sales.filter(sale => sale.barberId === currentUser.id)
+        : shop!.sales
+
+    appointmentsToProcess.forEach(app => {
         const appDate = new Date(app.date)
         const appTime = appDate.getTime()
         const price = Number(app.service.price) || 0
@@ -156,13 +183,114 @@ export default async function DashboardPage() {
         }
     })
 
+    // Process retail product sales into the stats and charts
+    salesToProcess.forEach(sale => {
+        const saleDate = new Date(sale.createdAt)
+        const saleTime = saleDate.getTime()
+        const price = Number(sale.totalAmount) || 0
+        
+        // Boundaries
+        if (saleTime >= todayStart.getTime() && saleTime < todayStart.getTime() + 86400000) {
+            stats.today.revenue += price
+        }
+        if (saleTime >= weekStart.getTime()) {
+            stats.week.revenue += price
+        }
+        if (saleTime >= monthStart.getTime()) {
+            stats.month.revenue += price
+        }
+
+        // Add to charts
+        if (saleTime >= todayStart.getTime() && saleTime < todayStart.getTime() + 86400000) {
+            const hourIdx = saleDate.getHours() - 7
+            if (hourIdx >= 0 && hourIdx < 16) {
+                todayChart[hourIdx].revenue += price
+            }
+        }
+
+        const weekDay = weekChart.find(d => 
+            saleDate.getFullYear() === d.date.getFullYear() && 
+            saleDate.getMonth() === d.date.getMonth() && 
+            saleDate.getDate() === d.date.getDate()
+        )
+        if (weekDay) {
+            weekDay.revenue += price
+        }
+
+        if (saleTime >= monthStart.getTime()) {
+            const dayIdx = saleDate.getDate() - 1 // 1st is index 0
+            if (monthChart[dayIdx]) {
+                monthChart[dayIdx].revenue += price
+            }
+        }
+    })
+
+    const recentSales = salesToProcess.slice(0, 5)
+
     return (
         <div className="flex flex-col gap-8 pb-12 w-full max-w-[1600px] px-2 sm:px-4 mx-auto">
             
             <OverviewHeaderClient />
 
             {/* Dynamic Interactive KPI Cards & Chart */}
-            <DashboardAnalytics stats={stats} charts={{ today: todayChart, week: weekChart, month: monthChart }} />
+            <DashboardAnalytics stats={stats} charts={{ today: todayChart, week: weekChart, month: monthChart }} userRole={currentUser.role} />
+
+            {/* If logged-in user is a BARBER, show a beautiful recent product sales list */}
+            {isBarber && (
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-yellow-500/5 blur-3xl pointer-events-none"></div>
+                    
+                    <h3 className="text-xl font-bold font-serif mb-2 text-zinc-900 dark:text-white" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
+                        Mis Ventas de Productos Recientes (POS)
+                    </h3>
+                    <p className="text-sm text-zinc-500 mb-6">Estas son las ventas de productos físicos (ceras, bebidas, etc.) que has registrado a través del Punto de Venta.</p>
+                    
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 font-semibold">
+                                <tr>
+                                    <th className="px-6 py-4">Fecha</th>
+                                    <th className="px-6 py-4">Cliente</th>
+                                    <th className="px-6 py-4">Método de Pago</th>
+                                    <th className="px-6 py-4">Productos</th>
+                                    <th className="px-6 py-4 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y text-zinc-900 dark:text-zinc-100 divide-zinc-200 dark:divide-zinc-800">
+                                {recentSales.length > 0 ? (
+                                    recentSales.map((sale: any) => (
+                                        <tr key={sale.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                            <td className="px-6 py-4 text-zinc-500">
+                                                {new Date(sale.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </td>
+                                            <td className="px-6 py-4 font-bold">
+                                                {sale.customer?.name || 'Cliente de Paso'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${sale.paymentMethod === 'CASH' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                                    {sale.paymentMethod === 'CASH' ? 'Efectivo' : 'Tarjeta'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-medium max-w-[200px] truncate">
+                                                {sale.items.map((item: any) => `${item.product.name} (x${item.quantity})`).join(', ')}
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-bold text-yellow-600 font-serif">
+                                                {new Intl.NumberFormat('es-CO', { style: 'currency', currency: shop!.currency, minimumFractionDigits: 0 }).format(sale.totalAmount)}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-zinc-400 font-medium">
+                                            Aún no has registrado ninguna venta de productos.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Main Content: Full Calendar */}
             <DashboardClient

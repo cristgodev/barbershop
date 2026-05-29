@@ -19,9 +19,19 @@ export async function POST(req: Request) {
 
         const barberId = schedules[0].barberId
 
-        // Verify permissions
+        // Verify permissions (BOLA/IDOR protection)
         if (session.user.role === 'BARBER' && session.user.id !== barberId) {
             return new NextResponse('Forbidden', { status: 403 })
+        }
+
+        if (session.user.role === 'OWNER') {
+            const barber = await prisma.user.findUnique({
+                where: { id: barberId },
+                select: { barbershopId: true }
+            })
+            if (!barber || barber.barbershopId !== session.user.barbershopId) {
+                return new NextResponse('Forbidden', { status: 403 })
+            }
         }
 
         // Use a transaction since we delete the old ones and create new ones

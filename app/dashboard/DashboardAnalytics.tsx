@@ -39,14 +39,19 @@ type DashboardAnalyticsProps = {
         today: ChartDataPoint[];
         week: ChartDataPoint[];
         month: ChartDataPoint[];
-    }
+    };
+    userRole?: string;
 }
 
-export default function DashboardAnalytics({ stats, charts }: DashboardAnalyticsProps) {
+export default function DashboardAnalytics({ stats, charts, userRole }: DashboardAnalyticsProps) {
     const [period, setPeriod] = useState<TimePeriod>('week')
     const { t } = useTranslation()
 
     const currentStats = stats[period]
+    const isBarber = userRole === 'BARBER'
+
+    const cardClassName = "bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-[1.5rem] p-6 shadow-sm relative overflow-hidden group block"
+    const cardHoverClassName = isBarber ? "" : " hover:shadow-xl hover:shadow-zinc-500/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
 
     return (
         <div className="space-y-6">
@@ -69,32 +74,65 @@ export default function DashboardAnalytics({ stats, charts }: DashboardAnalytics
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/dashboard/accounting" className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-[1.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-zinc-500/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group block">
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                {isBarber ? (
+                    <div className={`${cardClassName}${cardHoverClassName}`}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_bookings')}</p>
+                        <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{currentStats.count}</p>
                     </div>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_bookings')}</p>
-                    <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{currentStats.count}</p>
-                </Link>
+                ) : (
+                    <Link href="/dashboard/accounting" className={`${cardClassName}${cardHoverClassName}`}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_bookings')}</p>
+                        <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{currentStats.count}</p>
+                    </Link>
+                )}
                 
-                <Link href="/dashboard/accounting" className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-[1.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-zinc-500/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group block">
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity text-green-500">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                {isBarber ? (
+                    <div className={`${cardClassName}${cardHoverClassName}`}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity text-green-500">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_revenue')}</p>
+                        <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{formatCurrency(currentStats.revenue, (stats as any).currency)}</p>
                     </div>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_revenue')}</p>
-                    <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{formatCurrency(currentStats.revenue, (stats as any).currency)}</p>
-                </Link>
+                ) : (
+                    <Link href="/dashboard/accounting" className={`${cardClassName}${cardHoverClassName}`}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity text-green-500">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_revenue')}</p>
+                        <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{formatCurrency(currentStats.revenue, (stats as any).currency)}</p>
+                    </Link>
+                )}
 
-                <Link href="/dashboard/accounting" className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-[1.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-zinc-500/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group block">
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity text-amber-500">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {isBarber ? (
+                    <div className={`${cardClassName}${cardHoverClassName}`}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity text-amber-500">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_pending')}</p>
+                        <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{currentStats.pending}</p>
                     </div>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_pending')}</p>
-                    <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{currentStats.pending}</p>
-                </Link>
+                ) : (
+                    <Link href="/dashboard/accounting" className={`${cardClassName}${cardHoverClassName}`}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-zinc-100/50 dark:to-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity text-amber-500">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide uppercase mb-2">{t('dashboard.kpi_pending')}</p>
+                        <p className="text-4xl font-extrabold text-black dark:text-white animate-fade-in">{currentStats.pending}</p>
+                    </Link>
+                )}
             </div>
 
             {/* Revenue Chart */}

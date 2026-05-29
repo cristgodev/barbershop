@@ -10,6 +10,7 @@ export default function RegisterPage() {
         barbershopName: '',
         ownerName: '',
         email: '',
+        phone: '',
         password: '',
     });
     const [error, setError] = useState('');
@@ -145,6 +146,27 @@ export default function RegisterPage() {
                                     onChange={handleChange}
                                     className="appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl shadow-sm placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-yellow-600 focus:border-yellow-600 sm:text-sm bg-black/50 text-white transition-all focus:bg-black/80"
                                     placeholder="tu@email.com"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="phone"
+                                className="block text-sm font-medium text-zinc-300"
+                            >
+                                Número de WhatsApp
+                            </label>
+                            <div className="mt-2">
+                                <input
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    required
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    className="appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl shadow-sm placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-yellow-600 focus:border-yellow-600 sm:text-sm bg-black/50 text-white transition-all focus:bg-black/80"
+                                    placeholder="+57 300 123 4567"
                                 />
                             </div>
                         </div>

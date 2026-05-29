@@ -26,8 +26,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
         }
 
-        // Check permissions: Must be OWNER or the assigned barber
-        if (session.user.role !== 'OWNER' && session.user.id !== apt.barberId) {
+        // Check permissions: Must be the shop OWNER or the assigned barber (BOLA/IDOR protection)
+        const isAssignedBarber = session.user.id === apt.barberId
+        const isShopOwner = session.user.role === 'OWNER' && session.user.barbershopId === apt.barbershopId
+
+        if (!isAssignedBarber && !isShopOwner) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 

@@ -87,6 +87,33 @@ export async function POST(req: Request) {
                 include: { items: true }
             })
 
+            const barbershop = await tx.barbershop.findUnique({
+                where: { id: barbershopId },
+                select: { loyaltyRatio: true }
+            })
+            const ratio = barbershop?.loyaltyRatio || 5
+
+            if (customerId) {
+                const pointsToAward = totalAmount > 0 ? Math.max(1, Math.round(totalAmount / ratio)) : 0
+
+                await tx.customerLoyalty.upsert({
+                    where: {
+                        userId_barbershopId: {
+                            userId: customerId,
+                            barbershopId: barbershopId
+                        }
+                    },
+                    update: {
+                        points: { increment: pointsToAward }
+                    },
+                    create: {
+                        userId: customerId,
+                        barbershopId: barbershopId,
+                        points: pointsToAward
+                    }
+                })
+            }
+
             return newSale
         })
 

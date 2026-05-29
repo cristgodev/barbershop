@@ -19,13 +19,39 @@ export default async function LoyaltyPage() {
         redirect('/dashboard') // Route protection
     }
 
-    // Fetch clients sorted by points
-    const clients = await prisma.user.findMany({
-        where: { role: 'CUSTOMER', loyaltyPoints: { gt: 0 } },
-        select: { id: true, name: true, email: true, phone: true, loyaltyPoints: true },
-        orderBy: { loyaltyPoints: 'desc' },
+    // Fetch clients sorted by points for this specific barbershop from CustomerLoyalty table
+    const loyaltyBalances = await prisma.customerLoyalty.findMany({
+        where: {
+            barbershopId: session.user.barbershopId,
+            points: { gt: 0 }
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    phone: true
+                }
+            }
+        },
+        orderBy: { points: 'desc' },
         take: 50
     })
 
-    return <LoyaltyClient clients={clients} />
+    const clients = loyaltyBalances.map(lb => ({
+        id: lb.user.id,
+        name: lb.user.name,
+        email: lb.user.email,
+        phone: lb.user.phone,
+        loyaltyPoints: lb.points
+    }))
+
+    // Fetch dynamic rewards
+    const rewards = await prisma.loyaltyReward.findMany({
+        where: { barbershopId: session.user.barbershopId },
+        orderBy: { pointsCost: 'asc' }
+    })
+
+    return <LoyaltyClient clients={clients} initialRewards={rewards} />
 }

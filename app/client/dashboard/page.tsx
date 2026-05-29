@@ -82,11 +82,62 @@ export default async function ClientDashboardPage() {
         updatedAt: apt.updatedAt.toISOString()
     }));
 
+    // Fetch customer's loyalty balance and shop associations
+    const userDb = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { barbershopId: true }
+    });
+
+    let targetShopId = userDb?.barbershopId;
+    if (!targetShopId && appointments.length > 0) {
+        targetShopId = appointments[0].barbershopId;
+    }
+
+    // Fetch customer's loyalty balance for this specific barbershop
+    const loyaltyRecord = targetShopId 
+        ? await prisma.customerLoyalty.findUnique({
+            where: {
+                userId_barbershopId: {
+                    userId: session.user.id,
+                    barbershopId: targetShopId
+                }
+            },
+            select: { points: true }
+          })
+        : null;
+    const loyaltyPoints = loyaltyRecord?.points || 0;
+
+    // Fetch the shop slug for direct book link
+    const shopObj = targetShopId 
+        ? await prisma.barbershop.findUnique({
+            where: { id: targetShopId },
+            select: { slug: true, name: true }
+          })
+        : null;
+    const shopSlug = shopObj?.slug || "";
+    const shopName = shopObj?.name || "";
+
+    const rewards = targetShopId 
+        ? await prisma.loyaltyReward.findMany({
+            where: { barbershopId: targetShopId },
+            orderBy: { pointsCost: 'asc' }
+          })
+        : [];
+
     return (
         <ClientDashboardClient 
             userName={session.user.name || "Customer"} 
             upcomingAppointments={serializedUpcoming}
             pastAppointments={serializedPast}
+            loyaltyPoints={loyaltyPoints}
+            shopSlug={shopSlug}
+            shopName={shopName}
+            rewards={rewards.map(r => ({
+                id: r.id,
+                name: r.name,
+                pointsCost: r.pointsCost,
+                description: r.description
+            }))}
         />
     );
 }

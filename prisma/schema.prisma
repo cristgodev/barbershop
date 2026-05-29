@@ -42,12 +42,12 @@ model User {
   updatedAt              DateTime      @updatedAt
   emailVerified          DateTime?
   image                  String?
-  loyaltyPoints          Int           @default(0)
   noShowCount            Int           @default(0)
   instagramUrl           String?
   tiktokUrl              String?
   showOnLanding          Boolean       @default(true)
   accounts               Account[]
+  loyaltyBalances        CustomerLoyalty[]
   appointmentsAsBarber   Appointment[] @relation("BarberAppointments")
   appointmentsAsCustomer Appointment[] @relation("CustomerAppointments")
   notesWritten           ClientNote[]  @relation("BarberNotes")
@@ -73,8 +73,10 @@ model Barbershop {
   isCrmEnabled          Boolean       @default(false)
   isGamificationEnabled Boolean       @default(true)
   isLoyaltyEnabled      Boolean       @default(false)
+  loyaltyRatio          Int           @default(5)
   isMarketingEnabled    Boolean       @default(false)
   isPosEnabled          Boolean       @default(false)
+  isActive              Boolean       @default(true)
   currency              String        @default("USD")
   instagramUrl          String?
   tiktokUrl             String?
@@ -85,7 +87,31 @@ model Barbershop {
   services              Service[]
   timeOffs              ShopTimeOff[]
   staffGoals            StaffGoal[]
+  campaigns             Campaign[]
+  rewards               LoyaltyReward[]
   staff                 User[]        @relation("StaffToShop")
+  loyaltyBalances        CustomerLoyalty[]
+}
+
+model LoyaltyReward {
+  id           String     @id @default(cuid())
+  barbershopId String
+  name         String
+  pointsCost   Int
+  description  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+}
+
+model Campaign {
+  id           String     @id @default(cuid())
+  barbershopId String
+  message      String
+  imageUrl     String?
+  sentToCount  Int
+  createdAt    DateTime   @default(now())
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 }
 
 model Service {
@@ -225,4 +251,17 @@ model SaleItem {
   updatedAt   DateTime @updatedAt
   product     Product  @relation(fields: [productId], references: [id])
   sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+model CustomerLoyalty {
+  id           String     @id @default(cuid())
+  userId       String
+  barbershopId String
+  points       Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, barbershopId])
 }
